@@ -36,7 +36,15 @@ export interface MenuItem {
   reviews?: MenuItemReview[];
 }
 
-export type OrderStatus = 'placed' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'refunded';
+export type OrderStatus =
+  | 'placed'
+  | 'confirmed'
+  | 'preparing'
+  | 'ready'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded';
 
 export interface OrderItem {
   id: string;
@@ -259,14 +267,12 @@ export interface AdminTableRow {
   updatedAt: string;
 }
 
-/** A single call-to-action button on the hero carousel */
 export interface HeroCTA {
   label: string;
   href: string;
   variant: 'primary' | 'secondary';
 }
 
-/** One slide in the hero carousel – stored and managed via the admin panel */
 export interface HeroSlide {
   id: string;
   tag: string;
