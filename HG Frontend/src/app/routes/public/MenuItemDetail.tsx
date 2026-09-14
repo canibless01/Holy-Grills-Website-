@@ -7,7 +7,7 @@ import { FoodCard } from '@/components/menu/FoodCard';
 import { HPBadge } from '@/components/hp/HPBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatPrice } from '@/data/menu';
-import { getMenuItems } from '@/services/api/menu.service';
+import { getItemAddonGroups, getMenuItemById, getMenuItems } from '@/services/api/menu.service';
 import { useCartStore } from '@/stores/cartStore';
 import { useFavouritesStore } from '@/stores/favouritesStore';
 import { createCartLineId, getCartQuantityForMenuItem, getConfiguredMenuPrice, getPrimaryCartLineId } from '@/utils/pricing';
@@ -22,22 +22,60 @@ const MenuItemDetail = () => {
   const [isDesktop, setIsDesktop] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
   );
-  const { data: menuItems = [], isLoading } = useQuery({
+  const { data: menuItems = [], isLoading: isListLoading } = useQuery({
     queryKey: ['menu-items'],
     queryFn: getMenuItems,
   });
+
+  const { data: itemDetail, isLoading: isDetailLoading } = useQuery({
+    queryKey: ['menu-item-detail', menuId],
+    queryFn: () => getMenuItemById(menuId!),
+    enabled: Boolean(menuId),
+  });
+
+  const { data: fetchedAddonGroups = [] } = useQuery({
+    queryKey: ['menu-item-addons', menuId],
+    queryFn: () => getItemAddonGroups(menuId!),
+    enabled: Boolean(menuId),
+  });
+
   const { items, addItem, updateQuantity } = useCartStore();
   const { toggle: toggleFavourite, isFavourite } = useFavouritesStore();
 
-  const item = useMemo(() => menuItems.find((entry) => entry.id === menuId), [menuId, menuItems]);
+  const fallbackItem = useMemo(() => menuItems.find((entry) => entry.id === menuId), [menuId, menuItems]);
+  const item = itemDetail ?? fallbackItem;
+  const isLoading = isListLoading && isDetailLoading;
+
   const related = useMemo(() => item ? menuItems.filter((entry) => entry.category === item.category && entry.id !== item.id).slice(0, 3) : [], [item, menuItems]);
   const isSaved = item ? isFavourite(item.id) : false;
+
+  const variationGroups = item?.variationGroups ?? [];
+  const addonGroups = (item?.addonGroups && item.addonGroups.length > 0) ? item.addonGroups : fetchedAddonGroups;
+
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string[]>>({});
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (!item) return;
     setSelectedSize(item.sizes?.[0]?.label ?? null);
     setExtraQuantities({});
-  }, [item]);
+
+    const initialVars: Record<string, string[]> = {};
+    variationGroups.forEach((group) => {
+      if (group.is_required && group.options && group.options.length > 0) {
+        initialVars[group.id] = [group.options[0].id];
+      }
+    });
+    setSelectedVariations(initialVars);
+
+    const initialAddons: Record<string, string[]> = {};
+    addonGroups.forEach((group) => {
+      if (group.is_required && group.addons && group.addons.length > 0) {
+        initialAddons[group.id] = [group.addons[0].id];
+      }
+    });
+    setSelectedAddons(initialAddons);
+  }, [item, menuId]);
 
   useLayoutEffect(() => {
     const query = window.matchMedia('(min-width: 1024px)');
@@ -70,10 +108,86 @@ const MenuItemDetail = () => {
   const selectedExtras = Object.entries(extraQuantities).flatMap(([title, qty]) =>
     Array.from({ length: qty }).map(() => title)
   );
-  const unitPrice = getConfiguredMenuPrice(item, selectedSize, selectedExtras);
+  const basePrice = getConfiguredMenuPrice(item, selectedSize, selectedExtras);
+
+  // Compute variation deltas & addon prices
+  let variationDelta = 0;
+  const selectedVariationLabels: string[] = [];
+  variationGroups.forEach((group) => {
+    const selectedIds = selectedVariations[group.id] || [];
+    group.options?.forEach((opt) => {
+      if (selectedIds.includes(opt.id)) {
+        variationDelta += opt.price_delta || 0;
+        selectedVariationLabels.push(opt.name);
+      }
+    });
+  });
+
+  let addonDelta = 0;
+  const selectedAddonLabels: string[] = [];
+  addonGroups.forEach((group) => {
+    const selectedIds = selectedAddons[group.id] || [];
+    group.addons?.forEach((addon) => {
+      if (selectedIds.includes(addon.id)) {
+        addonDelta += addon.price || 0;
+        selectedAddonLabels.push(addon.name);
+      }
+    });
+  });
+
+  const unitPrice = basePrice + variationDelta + addonDelta;
   const total = unitPrice;
   const hpTotal = item.hpValue;
   const existingQty = getCartQuantityForMenuItem(items, item.id);
+
+  // Validation
+  const areVariationsValid = variationGroups.every((group) => {
+    if (!group.is_required) return true;
+    const count = (selectedVariations[group.id] || []).length;
+    const minNeeded = Math.max(1, group.min_selections || 0);
+    return count >= minNeeded;
+  });
+
+  const areAddonsValid = addonGroups.every((group) => {
+    if (!group.is_required) return true;
+    const count = (selectedAddons[group.id] || []).length;
+    const minNeeded = Math.max(1, group.min_select || 0);
+    return count >= minNeeded;
+  });
+
+  const canAddToCart = item.isAvailable && areVariationsValid && areAddonsValid;
+
+  const toggleVariationOption = (groupId: string, optionId: string, maxSelections: number) => {
+    setSelectedVariations((prev) => {
+      const current = prev[groupId] || [];
+      if (maxSelections === 1) {
+        return { ...prev, [groupId]: [optionId] };
+      }
+      if (current.includes(optionId)) {
+        return { ...prev, [groupId]: current.filter((id) => id !== optionId) };
+      }
+      if (current.length < maxSelections) {
+        return { ...prev, [groupId]: [...current, optionId] };
+      }
+      return prev;
+    });
+  };
+
+  const toggleAddonOption = (groupId: string, addonId: string, maxSelect: number) => {
+    setSelectedAddons((prev) => {
+      const current = prev[groupId] || [];
+      if (maxSelect === 1) {
+        return { ...prev, [groupId]: [addonId] };
+      }
+      if (current.includes(addonId)) {
+        return { ...prev, [groupId]: current.filter((id) => id !== addonId) };
+      }
+      if (current.length < maxSelect) {
+        return { ...prev, [groupId]: [...current, addonId] };
+      }
+      return prev;
+    });
+  };
 
   const updateExtraQuantity = (title: string, delta: number) => {
     setExtraQuantities((current) => {
@@ -88,12 +202,17 @@ const MenuItemDetail = () => {
   };
 
   const handleAdd = () => {
-    if (!item.isAvailable) return;
-    const lineId = createCartLineId(item.id, selectedSize, selectedExtras);
+    if (!canAddToCart) {
+      toast.error("Please select required options before adding.");
+      return;
+    }
+    const allExtras = [
+      ...selectedExtras,
+      ...selectedVariationLabels,
+      ...selectedAddonLabels,
+    ];
+    const lineId = createCartLineId(item.id, selectedSize, allExtras);
     const existingLine = items.find((entry) => entry.id === lineId);
-    const extrasForCart = Object.entries(extraQuantities)
-      .filter(([, qty]) => qty > 0)
-      .map(([title, qty]) => (qty > 1 ? `${title} ×${qty}` : title));
 
     if (!existingLine) {
       addItem({
@@ -104,7 +223,7 @@ const MenuItemDetail = () => {
         imageUrl: item.imageUrl,
         hpValue: item.hpValue,
         sizeLabel: selectedSize ?? undefined,
-        extras: extrasForCart,
+        extras: allExtras,
       });
     } else {
       updateQuantity(lineId, existingLine.quantity + 1);
@@ -140,6 +259,86 @@ const MenuItemDetail = () => {
           </div>
         </section>
       ) : null}
+
+      {variationGroups.map((group) => {
+        const selected = selectedVariations[group.id] || [];
+        return (
+          <section key={group.id} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                {group.name} {group.is_required ? <span className="text-destructive">* (Required)</span> : '(Optional)'}
+              </p>
+              {group.max_selections > 1 ? (
+                <span className="text-xs text-muted-foreground">Select up to {group.max_selections}</span>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              {group.options?.map((option) => {
+                const isSelected = selected.includes(option.id);
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    disabled={!option.is_available}
+                    onClick={() => toggleVariationOption(group.id, option.id, group.max_selections || 1)}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors ${
+                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/30'
+                    } ${!option.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{option.name}</p>
+                      {option.price_delta ? (
+                        <p className="text-xs text-muted-foreground">+{formatPrice(option.price_delta)}</p>
+                      ) : null}
+                    </div>
+                    {isSelected ? <CheckCircle2 size={18} className="text-primary" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+
+      {addonGroups.map((group) => {
+        const selected = selectedAddons[group.id] || [];
+        return (
+          <section key={group.id} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                {group.name} {group.is_required ? <span className="text-destructive">* (Required)</span> : '(Optional)'}
+              </p>
+              {group.max_select > 1 ? (
+                <span className="text-xs text-muted-foreground">Select up to {group.max_select}</span>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              {group.addons?.map((addon) => {
+                if (addon.is_archived) return null;
+                const isSelected = selected.includes(addon.id);
+                return (
+                  <button
+                    key={addon.id}
+                    type="button"
+                    disabled={!addon.is_available}
+                    onClick={() => toggleAddonOption(group.id, addon.id, group.max_select || 1)}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors ${
+                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/30'
+                    } ${!addon.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{addon.name}</p>
+                      {addon.description ? <p className="text-xs text-muted-foreground">{addon.description}</p> : null}
+                      <p className="text-xs font-semibold text-primary">+{formatPrice(addon.price)}</p>
+                    </div>
+                    {isSelected ? <CheckCircle2 size={18} className="text-primary" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
 
       {item.extras?.length ? (
         <section className="space-y-3">
@@ -229,7 +428,7 @@ const MenuItemDetail = () => {
       </div>
 
       <div className="space-y-3">
-        <button onClick={handleAdd} disabled={!item.isAvailable} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-fire px-4 py-4 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40">
+        <button onClick={handleAdd} disabled={!canAddToCart} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-fire px-4 py-4 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40">
           <ShoppingBag size={18} /> Add to cart — {formatPrice(total)}
         </button>
         <button onClick={handleFavourite} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary">

@@ -19,6 +19,65 @@ export interface MenuItemReview {
   rewardHP?: number;
 }
 
+export interface MenuItemVariationOption {
+  id: string;
+  variation_group_id?: string;
+  name: string;
+  price_delta: number;
+  is_available: boolean;
+  sort_order?: number;
+  created_at?: string;
+}
+
+export interface MenuItemVariationGroup {
+  id: string;
+  menu_item_id?: string;
+  name: string;
+  is_required: boolean;
+  min_selections: number;
+  max_selections: number;
+  sort_order?: number;
+  created_at?: string;
+  options?: MenuItemVariationOption[];
+}
+
+export interface MenuAddon {
+  id: string;
+  group_id?: string;
+  name: string;
+  description?: string;
+  price: number;
+  is_available: boolean;
+  is_archived?: boolean;
+  sort_order?: number;
+}
+
+export interface MenuAddonGroup {
+  id: string;
+  menu_item_id?: string;
+  name: string;
+  is_required: boolean;
+  min_select: number;
+  max_select: number;
+  sort_order?: number;
+  addons?: MenuAddon[];
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface KitchenCapacity {
+  daily_order_capacity?: number;
+  current_orders?: number;
+  [key: string]: unknown;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -28,12 +87,17 @@ export interface MenuItem {
   category: string;
   hpValue: number;
   isAvailable: boolean;
+  isSecret?: boolean;
+  hpMultiplier?: number;
+  dailyLimit?: number;
   sizes?: MenuItemSize[];
   tagLine?: string;
   slashedPrice?: number;
   percentageOff?: number;
   extras?: MenuItemExtra[];
   reviews?: MenuItemReview[];
+  variationGroups?: MenuItemVariationGroup[];
+  addonGroups?: MenuAddonGroup[];
 }
 
 export type OrderStatus = 'placed' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled' | 'refunded';
