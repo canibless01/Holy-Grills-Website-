@@ -55,17 +55,17 @@ const PaymentSuccessPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
             <div className="rounded-lg border border-border bg-secondary/50 p-4">
               <p className="text-xs text-muted-foreground font-body mb-1">Amount paid</p>
-              <p className="text-lg font-display font-bold text-foreground">₦{state.total.toLocaleString()}</p>
+              <p className="text-lg font-display font-bold text-foreground">₦{(state?.total ?? 0).toLocaleString()}</p>
             </div>
             <div className="rounded-lg border border-border bg-secondary/50 p-4">
               <p className="text-xs text-muted-foreground font-body mb-1">Method</p>
-              <p className="text-lg font-display font-bold text-foreground capitalize">{state.method}</p>
+              <p className="text-lg font-display font-bold text-foreground capitalize">{state?.method ?? 'delivery'}</p>
             </div>
             <div className="rounded-lg border border-border bg-secondary/50 p-4 flex items-center gap-2">
               <Flame size={16} className="text-accent" />
               <div>
                 <p className="text-xs text-muted-foreground font-body">HP earned</p>
-                <p className="text-lg font-display font-bold text-foreground">+{state.hp} HP</p>
+                <p className="text-lg font-display font-bold text-foreground">+{state?.hp ?? 0} HP</p>
               </div>
             </div>
           </div>

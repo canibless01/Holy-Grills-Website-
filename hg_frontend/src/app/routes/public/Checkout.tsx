@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from '@/lib/router';
 import { useCartStore, selectSubtotal, selectTotalHP } from '@/stores/cartStore';
 import { DELIVERY_FEE, formatPrice } from '@/data/menu';
-import { Flame, Loader2, MapPin, Home, Clock, UserRound, Mail, Phone, AlertCircle } from 'lucide-react';
+import { Flame, Loader2, Home, Clock, Mail, Phone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { FulfillmentDialog } from '@/components/checkout/FulfillmentDialog';
 import { hasDeliveryInfo, hasPickupInfo, useFulfillmentStore } from '@/stores/fulfillmentStore';
@@ -14,18 +14,19 @@ const CheckoutPage = () => {
   const subtotal = useCartStore(selectSubtotal);
   const totalHP = useCartStore(selectTotalHP);
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   const { method, deliveryInfo, pickupInfo, setMethod } = useFulfillmentStore();
   const deliveryReady = useFulfillmentStore(hasDeliveryInfo);
   const pickupReady = useFulfillmentStore(hasPickupInfo);
+
+  // All hooks declared unconditionally at the top
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Guest contact info
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestContactError, setGuestContactError] = useState('');
+  const [capacityError, setCapacityError] = useState<{ nextDate?: string } | null>(null);
 
   const deliveryFee = method === 'delivery' ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
@@ -37,8 +38,6 @@ const CheckoutPage = () => {
   if (items.length === 0) return null;
 
   const canPay = method === 'delivery' ? deliveryReady : pickupReady;
-
-  const [capacityError, setCapacityError] = useState<{ nextDate?: string } | null>(null);
 
   const handlePay = async (acceptDeferred = false) => {
     if (!isAuthenticated) {
