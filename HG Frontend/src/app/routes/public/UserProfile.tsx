@@ -11,6 +11,8 @@ const UserProfilePage = () => {
   const updateProfileMutation = useUpdateAuthProfile();
 
   const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [leaderboardShowFullName, setLeaderboardShowFullName] = useState(false);
   const [phone, setPhone] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -22,6 +24,8 @@ const UserProfilePage = () => {
     }
 
     setName(user.full_name ?? '');
+    setNickname(user.nickname ?? '');
+    setLeaderboardShowFullName(user.leaderboard_show_full_name ?? false);
     setPhone(user.phone ?? '');
     setDateOfBirth(user.date_of_birth ?? '');
     setEmailNotifications(user.email_notifications ?? true);
@@ -69,25 +73,29 @@ const UserProfilePage = () => {
         date_of_birth: dateOfBirth,
         email_notifications: emailNotifications,
         full_name: name.trim(),
+        nickname: nickname.trim() || null,
+        leaderboard_show_full_name: leaderboardShowFullName,
         phone: phone.trim(),
       });
 
       setUser({
         ...user,
         full_name: updatedProfile.full_name,
+        nickname: updatedProfile.nickname,
+        leaderboard_show_full_name: updatedProfile.leaderboard_show_full_name,
         phone: updatedProfile.phone,
         date_of_birth: updatedProfile.date_of_birth,
         email_notifications: updatedProfile.email_notifications,
       });
       setIsDirty(false);
-      toast.success('Profile updated!');
+      toast.success('Profile updated successfully!');
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'Unable to update profile right now. Please try again.';
+          : 'Failed to update profile details.';
       console.log('Update profile error message:', message);
-      toast.error(message);
+      toast.error('Failed to update profile details.');
     }
   };
 
@@ -121,6 +129,40 @@ const UserProfilePage = () => {
               />
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground font-display">Nickname (Optional)</label>
+            <div className="relative">
+              <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => {
+                  setIsDirty(true);
+                  setNickname(e.target.value);
+                }}
+                placeholder="e.g. Speedy"
+                className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-secondary border border-border text-sm font-body text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Friends and notifications will address you by nickname when set.</p>
+          </div>
+
+          <label className="flex items-center justify-between rounded-lg border border-border bg-secondary/60 px-4 py-3">
+            <div className="space-y-0.5">
+              <div className="text-sm font-semibold text-foreground">Display full name on Leaderboard</div>
+              <div className="text-xs text-muted-foreground">Only affects the leaderboard and Hall of Fame — everything else always uses your nickname.</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={leaderboardShowFullName}
+              onChange={(e) => {
+                setIsDirty(true);
+                setLeaderboardShowFullName(e.target.checked);
+              }}
+              className="h-4 w-4 accent-primary"
+            />
+          </label>
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground font-display">Phone Number</label>

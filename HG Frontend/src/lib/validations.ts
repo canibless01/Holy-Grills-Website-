@@ -3,6 +3,13 @@ import { z } from "zod";
 export const createUserSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters long"),
+    nickname: z
+      .string()
+      .min(2, "Nickname must be between 2 and 20 characters")
+      .max(20, "Nickname must be between 2 and 20 characters")
+      .regex(/^[a-zA-Z0-9_ ]+$/, "Letters, numbers, underscores, and spaces only")
+      .optional()
+      .or(z.literal("")),
     email: z.string().email("Invalid email address"),
     phone_number: z.string().optional(),
     password: z.string().min(6, "Password must be at least 6 characters long"),
