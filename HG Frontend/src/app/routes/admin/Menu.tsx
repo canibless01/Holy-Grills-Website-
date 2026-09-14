@@ -214,6 +214,9 @@ function MenuItemForm({
     addOnEditor: item?.addOnEditor || '',
     itemOrderCap: item?.itemOrderCap?.toString() || '40',
     dailyOrderCap: item?.dailyOrderCap?.toString() || '200',
+    isSecret: item?.isSecret || false,
+    hpMultiplier: item?.hpMultiplier?.toString() || '1.0',
+    dailyLimit: item?.dailyLimit?.toString() || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -228,6 +231,9 @@ function MenuItemForm({
       addOnEditor: form.addOnEditor,
       itemOrderCap: parseInt(form.itemOrderCap) || 0,
       dailyOrderCap: parseInt(form.dailyOrderCap) || 0,
+      isSecret: form.isSecret,
+      hpMultiplier: parseFloat(form.hpMultiplier) || 1.0,
+      dailyLimit: form.dailyLimit ? parseInt(form.dailyLimit) : undefined,
     });
   };
 
@@ -263,7 +269,7 @@ function MenuItemForm({
               <label className="block text-xs text-muted-foreground font-body mb-1">{field.label}</label>
               <input
                 type={field.type}
-                value={form[field.key as keyof typeof form]}
+                value={String(form[field.key as keyof typeof form] ?? '')}
                 onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
                 placeholder={field.placeholder}
                 className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -281,6 +287,19 @@ function MenuItemForm({
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center justify-between py-2 border-t border-b border-border">
+            <div>
+              <p className="text-xs font-semibold text-foreground">Hidden — only found by search</p>
+              <p className="text-[10px] text-muted-foreground">Excludes item from main menu grid unless searched by name</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={form.isSecret}
+              onChange={(e) => setForm((f) => ({ ...f, isSecret: e.target.checked }))}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/50"
+            />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg bg-secondary text-foreground font-body font-medium text-sm hover:bg-border transition-colors">

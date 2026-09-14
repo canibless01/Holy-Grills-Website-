@@ -19,6 +19,65 @@ export interface MenuItemReview {
   rewardHP?: number;
 }
 
+export interface MenuItemVariationOption {
+  id: string;
+  variation_group_id?: string;
+  name: string;
+  price_delta: number;
+  is_available: boolean;
+  sort_order?: number;
+  created_at?: string;
+}
+
+export interface MenuItemVariationGroup {
+  id: string;
+  menu_item_id?: string;
+  name: string;
+  is_required: boolean;
+  min_selections: number;
+  max_selections: number;
+  sort_order?: number;
+  created_at?: string;
+  options?: MenuItemVariationOption[];
+}
+
+export interface MenuAddon {
+  id: string;
+  group_id?: string;
+  name: string;
+  description?: string;
+  price: number;
+  is_available: boolean;
+  is_archived?: boolean;
+  sort_order?: number;
+}
+
+export interface MenuAddonGroup {
+  id: string;
+  menu_item_id?: string;
+  name: string;
+  is_required: boolean;
+  min_select: number;
+  max_select: number;
+  sort_order?: number;
+  addons?: MenuAddon[];
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface KitchenCapacity {
+  daily_order_capacity?: number;
+  current_orders?: number;
+  [key: string]: unknown;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -28,12 +87,17 @@ export interface MenuItem {
   category: string;
   hpValue: number;
   isAvailable: boolean;
+  isSecret?: boolean;
+  hpMultiplier?: number;
+  dailyLimit?: number;
   sizes?: MenuItemSize[];
   tagLine?: string;
   slashedPrice?: number;
   percentageOff?: number;
   extras?: MenuItemExtra[];
   reviews?: MenuItemReview[];
+  variationGroups?: MenuItemVariationGroup[];
+  addonGroups?: MenuAddonGroup[];
 }
 
 export type OrderStatus =
@@ -281,4 +345,89 @@ export interface HeroSlide {
   ctaButtons: HeroCTA[];
   imageUrl: string;
   isActive: boolean;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  description?: string;
+  trigger_type: string;
+  trigger_value: number;
+  hp_awarded: number;
+  time_window?: 'weekly' | 'monthly' | string | null;
+  icon_won?: string | null;
+  icon_locked?: string | null;
+  is_active?: boolean;
+  social_link?: string | null;
+  trigger_meta?: Record<string, unknown> | null;
+}
+
+export interface UserMilestone {
+  id: string;
+  user_id: string;
+  milestone_id: string;
+  completed_at: string;
+  hp_awarded: number;
+  period_key?: string | null;
+}
+
+export interface ChallengeBadge {
+  id?: string;
+  title?: string;
+  icon_won?: string;
+  earned?: boolean;
+  earned_at?: string;
+  hp_awarded?: number;
+  [key: string]: unknown;
+}
+
+export interface ChallengesMyResponse {
+  badges: ChallengeBadge[];
+  challenges_available: Milestone[];
+  challenges_completed: Milestone[];
+}
+
+export interface ChallengeCompleteResponse {
+  success?: boolean;
+  milestone?: string;
+  hp_awarded?: number;
+  already_completed?: boolean;
+  message?: string;
+  error?: string;
+}
+
+export interface PWAPushBonusStatus {
+  pwa_install: boolean;
+  push_subscribe: boolean;
+  bonus_completed: boolean;
+  eligible: boolean;
+}
+
+export interface PushSubscriptionPayload {
+  subscription: Record<string, unknown>;
+  device_label?: string;
+}
+
+export interface ReferredUser {
+  id: string;
+  referred_user_id?: string;
+  name?: string;
+  email?: string;
+  status: 'pending' | 'completed' | string;
+  hp_awarded: number;
+  created_at: string;
+}
+
+export interface ReferralStats {
+  referral_code: string;
+  referral_link: string;
+  total_referrals: number;
+  completed_referrals: number;
+  pending_referrals: number;
+  total_hp_earned: number;
+}
+
+export interface ReferralDataResponse {
+  stats: ReferralStats;
+  referrals: ReferredUser[];
 }
