@@ -63,8 +63,8 @@ export default function ReferralsPage() {
           text: `Use my referral code ${referralCode} to get bonus Holy Points on your first order!`,
           url: referralLink,
         });
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if ((err as Error)?.name !== 'AbortError') {
           handleCopyLink();
         }
       }

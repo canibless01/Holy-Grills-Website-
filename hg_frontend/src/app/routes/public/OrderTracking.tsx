@@ -11,6 +11,7 @@ import { formatPrice } from '@/data/menu';
 import type { OrderStatus } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 import { getOrderById, submitOrderReview, claimGuestOrder } from '@/services/api/order.service';
+import { toast } from 'sonner';
 
 const GuestOrderLookup = () => {
   const [orderId, setOrderId] = useState('');
@@ -64,13 +65,17 @@ const GuestOrderLookup = () => {
   );
 };
 
-import { toast } from 'sonner';
-
 const OrderTrackingPage = () => {
   const { id } = useParams<{ id: string }>();
   const claimToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('claim_token') || undefined : undefined;
   const { isAuthenticated } = useAuthStore();
+
+  // Declare all hooks unconditionally at top level
   const [isClaiming, setIsClaiming] = useState(false);
+  const [kitchenRating, setKitchenRating] = useState(5);
+  const [riderRating, setRiderRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id, claimToken],
@@ -88,6 +93,24 @@ const OrderTrackingPage = () => {
       toast.error('Order is already owned or claimed');
     } finally {
       setIsClaiming(false);
+    }
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!order?.id) return;
+    setIsSubmittingReview(true);
+    try {
+      await submitOrderReview(order.id, {
+        rating: Math.round((kitchenRating + riderRating) / 2),
+        kitchen_rating: kitchenRating,
+        rider_rating: riderRating,
+        comment: reviewComment,
+      });
+      toast.success('Thank you for your feedback!');
+    } catch {
+      toast.error('Failed to submit review.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -120,29 +143,6 @@ const OrderTrackingPage = () => {
       </main>
     );
   }
-
-  const [kitchenRating, setKitchenRating] = useState(5);
-  const [riderRating, setRiderRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-
-  const handleReviewSubmit = async () => {
-    if (!order?.id) return;
-    setIsSubmittingReview(true);
-    try {
-      await submitOrderReview(order.id, {
-        rating: Math.round((kitchenRating + riderRating) / 2),
-        kitchen_rating: kitchenRating,
-        rider_rating: riderRating,
-        comment: reviewComment,
-      });
-      toast.success('Thank you for your feedback!');
-    } catch {
-      toast.error('Failed to submit review.');
-    } finally {
-      setIsSubmittingReview(false);
-    }
-  };
 
   const timestamps = order.statusHistory.reduce((accumulator, event) => {
     accumulator[event.status] = event.timestamp;

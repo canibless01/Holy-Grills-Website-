@@ -8,15 +8,15 @@ export const referralService = {
    */
   async getReferrals(): Promise<ReferralDataResponse> {
     const res = await apiClient.get<ReferralDataResponse | { data: ReferralDataResponse }>('/api/referrals');
-    const data = (res.data && 'data' in res.data ? res.data.data : res.data) as Partial<ReferralDataResponse>;
+    const data = (res.data && 'data' in res.data ? res.data.data : res.data) as Partial<ReferralDataResponse> & Record<string, unknown>;
 
     const stats = data?.stats ?? {
-      referral_code: (data as any)?.referral_code ?? '',
-      referral_link: (data as any)?.referral_link ?? '',
-      total_referrals: (data as any)?.total_referrals ?? 0,
-      completed_referrals: (data as any)?.completed_referrals ?? 0,
-      pending_referrals: (data as any)?.pending_referrals ?? 0,
-      total_hp_earned: (data as any)?.total_hp_earned ?? 0,
+      referral_code: (data?.referral_code as string) ?? '',
+      referral_link: (data?.referral_link as string) ?? '',
+      total_referrals: (data?.total_referrals as number) ?? 0,
+      completed_referrals: (data?.completed_referrals as number) ?? 0,
+      pending_referrals: (data?.pending_referrals as number) ?? 0,
+      total_hp_earned: (data?.total_hp_earned as number) ?? 0,
     };
 
     const referrals = Array.isArray(data?.referrals)

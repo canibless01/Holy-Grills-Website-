@@ -91,8 +91,8 @@ export const walletService = {
     if (Array.isArray(data)) {
       return data as WalletTransactionItem[];
     }
-    if (data && typeof data === 'object' && 'transactions' in data && Array.isArray((data as any).transactions)) {
-      return (data as any).transactions as WalletTransactionItem[];
+    if (data && typeof data === 'object' && data !== null && 'transactions' in data && Array.isArray((data as { transactions: unknown[] }).transactions)) {
+      return (data as { transactions: WalletTransactionItem[] }).transactions;
     }
     return [];
   },
@@ -131,8 +131,8 @@ export const walletService = {
     if (Array.isArray(data)) {
       return data as WalletTransactionItem[];
     }
-    if (data && typeof data === 'object' && 'transactions' in data && Array.isArray((data as any).transactions)) {
-      return (data as any).transactions as WalletTransactionItem[];
+    if (data && typeof data === 'object' && data !== null && 'transactions' in data && Array.isArray((data as { transactions: unknown[] }).transactions)) {
+      return (data as { transactions: WalletTransactionItem[] }).transactions;
     }
     return [];
   },
