@@ -5,9 +5,17 @@ import { useCartStore } from '@/stores/cartStore';
 import { playUiTone } from '@/utils/sound';
 
 type PaymentState = {
-  total: number;
-  method: 'delivery' | 'pickup';
-  hp: number;
+  total?: number;
+  method?: 'delivery' | 'pickup';
+  hp?: number;
+  order?: {
+    id: string;
+    order_number: string;
+    is_scheduled?: boolean;
+    scheduled_for?: string;
+    delivery_window_start?: string;
+    delivery_window_end?: string;
+  };
 };
 
 const PaymentSuccessPage = () => {
@@ -17,15 +25,12 @@ const PaymentSuccessPage = () => {
   const clearCart = useCartStore((s) => s.clearCart);
 
   useEffect(() => {
-    if (!state) {
-      navigate('/checkout', { replace: true });
-      return;
-    }
     clearCart();
     playUiTone('checkout');
-  }, [state, clearCart, navigate]);
+  }, [clearCart]);
 
-  if (!state) return null;
+  const order = state?.order;
+  const isScheduled = Boolean(order?.is_scheduled);
 
   return (
     <main className="flex-1 md:pt-24 pb-12">
@@ -35,8 +40,16 @@ const PaymentSuccessPage = () => {
             <CheckCircle2 size={32} />
           </div>
           <div className="space-y-1">
-            <h1 className="font-display font-bold text-foreground text-3xl">Payment successful</h1>
-            <p className="text-sm text-muted-foreground font-body">We’ve started preparing your order.</p>
+            <h1 className="font-display font-bold text-foreground text-3xl">
+              {isScheduled ? 'Order scheduled!' : 'Order placed successfully!'}
+            </h1>
+            {isScheduled ? (
+              <p className="text-sm text-amber-700 font-body">
+                Today's orders are full — you're scheduled for {order?.scheduled_for ? new Date(order.scheduled_for).toLocaleDateString() : 'the next available date'}, delivery between {order?.delivery_window_start || '18:00'}–{order?.delivery_window_end || '19:00'}.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground font-body">We’ve received your order and started preparing.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">

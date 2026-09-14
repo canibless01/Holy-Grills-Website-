@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { formatPrice } from '@/data/menu';
 import type { OrderStatus } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
-import { getOrderById } from '@/services/api/order.service';
+import { getOrderById, submitOrderReview, claimGuestOrder } from '@/services/api/order.service';
 
 const GuestOrderLookup = () => {
   const [orderId, setOrderId] = useState('');
@@ -64,14 +64,32 @@ const GuestOrderLookup = () => {
   );
 };
 
+import { toast } from 'sonner';
+
 const OrderTrackingPage = () => {
   const { id } = useParams<{ id: string }>();
+  const claimToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('claim_token') || undefined : undefined;
   const { isAuthenticated } = useAuthStore();
+  const [isClaiming, setIsClaiming] = useState(false);
+
   const { data: order, isLoading } = useQuery({
-    queryKey: ['order', id],
-    queryFn: () => getOrderById(id || ''),
+    queryKey: ['order', id, claimToken],
+    queryFn: () => getOrderById(id || '', claimToken),
     enabled: Boolean(id),
   });
+
+  const handleClaim = async () => {
+    if (!id || !claimToken) return;
+    setIsClaiming(true);
+    try {
+      await claimGuestOrder(id, claimToken);
+      toast.success('Order claimed successfully!');
+    } catch {
+      toast.error('Order is already owned or claimed');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   if (!isAuthenticated && !id) {
     return <GuestOrderLookup />;
@@ -102,6 +120,29 @@ const OrderTrackingPage = () => {
       </main>
     );
   }
+
+  const [kitchenRating, setKitchenRating] = useState(5);
+  const [riderRating, setRiderRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const handleReviewSubmit = async () => {
+    if (!order?.id) return;
+    setIsSubmittingReview(true);
+    try {
+      await submitOrderReview(order.id, {
+        rating: Math.round((kitchenRating + riderRating) / 2),
+        kitchen_rating: kitchenRating,
+        rider_rating: riderRating,
+        comment: reviewComment,
+      });
+      toast.success('Thank you for your feedback!');
+    } catch {
+      toast.error('Failed to submit review.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const timestamps = order.statusHistory.reduce((accumulator, event) => {
     accumulator[event.status] = event.timestamp;
@@ -224,6 +265,16 @@ const OrderTrackingPage = () => {
             <div className="rounded-[2rem] border border-border bg-card p-5">
               <h2 className="font-display text-xl font-bold text-foreground">Next actions</h2>
               <div className="mt-4 space-y-3">
+                {claimToken && isAuthenticated ? (
+                  <button
+                    onClick={handleClaim}
+                    disabled={isClaiming}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-fire px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isClaiming ? 'Claiming...' : 'Claim this order to your account'}
+                  </button>
+                ) : null}
+
                 <Link
                   to="/menu"
                   className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
@@ -231,9 +282,23 @@ const OrderTrackingPage = () => {
                   <RotateCcw size={16} /> Reorder this basket
                 </Link>
                 {isDelivered ? (
-                  <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground">
-                    <Star size={16} /> Leave a review for +10 HP
-                  </button>
+                  <div className="space-y-3 rounded-2xl border border-border p-4 bg-secondary/30">
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-1.5"><Star size={16} className="text-amber-500" /> Rate your meal & delivery</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Kitchen ({kitchenRating}★)</span>
+                        <input type="range" min="1" max="5" value={kitchenRating} onChange={(e) => setKitchenRating(Number(e.target.value))} className="w-full accent-primary" />
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Rider ({riderRating}★)</span>
+                        <input type="range" min="1" max="5" value={riderRating} onChange={(e) => setRiderRating(Number(e.target.value))} className="w-full accent-primary" />
+                      </div>
+                    </div>
+                    <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Write a comment..." className="w-full rounded-xl border border-border bg-background p-2 text-xs text-foreground" rows={2} />
+                    <button onClick={handleReviewSubmit} disabled={isSubmittingReview} className="w-full rounded-xl bg-primary py-2 text-xs font-semibold text-primary-foreground">
+                      {isSubmittingReview ? 'Submitting...' : 'Submit review for +30 HP'}
+                    </button>
+                  </div>
                 ) : (
                   <div className="rounded-2xl bg-secondary/60 p-4 text-sm text-muted-foreground">
                     Review prompt unlocks automatically after delivery confirmation.

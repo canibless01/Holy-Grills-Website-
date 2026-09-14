@@ -127,14 +127,55 @@ export async function getOrders(): Promise<Order[]> {
   }
 }
 
-export async function getOrderById(orderId: string): Promise<Order | null> {
+export async function getOrderById(orderId: string, claimToken?: string): Promise<Order | null> {
   try {
-    const response = await apiClient.get(`/orders/${orderId}`);
+    const url = claimToken ? `/orders/${orderId}?claim_token=${claimToken}` : `/orders/${orderId}`;
+    const response = await apiClient.get(url);
     const unwrapped = unwrapData<unknown>(response.data);
     return mapOrder(unwrapped, 0);
   } catch {
     return MOCK_ORDERS.find((order) => order.id === orderId) ?? null;
   }
+}
+
+export async function validatePromoCode(code: string, subtotal: number): Promise<{ valid: boolean; discount_amount: number; message?: string }> {
+  const response = await apiClient.post('/orders/validate-promo', { code, order_subtotal: subtotal });
+  const data = unwrapData<Record<string, unknown>>(response.data);
+  return {
+    valid: Boolean(data.valid),
+    discount_amount: asNumber(data.discount_amount, 0),
+    message: asOptionalString(data.message),
+  };
+}
+
+export async function createOrderApi(payload: Record<string, unknown>): Promise<{ id: string; order_number: string; is_scheduled?: boolean; scheduled_for?: string; delivery_window_start?: string; delivery_window_end?: string }> {
+  const response = await apiClient.post('/orders', payload);
+  const data = unwrapData<Record<string, unknown>>(response.data);
+  return {
+    id: asString(data.id ?? data.order_id),
+    order_number: asString(data.order_number),
+    is_scheduled: Boolean(data.is_scheduled),
+    scheduled_for: asOptionalString(data.scheduled_for),
+    delivery_window_start: asOptionalString(data.delivery_window_start),
+    delivery_window_end: asOptionalString(data.delivery_window_end),
+  };
+}
+
+export async function submitOrderReview(orderId: string, payload: { rating: number; kitchen_rating?: number; rider_rating?: number; comment?: string }): Promise<void> {
+  await apiClient.post(`/orders/${orderId}/review`, payload);
+}
+
+export async function callAssignedRider(orderId: string): Promise<{ phone: string; call_url?: string }> {
+  const response = await apiClient.get(`/orders/${orderId}/call-rider`);
+  const data = unwrapData<Record<string, unknown>>(response.data);
+  return {
+    phone: asString(data.phone),
+    call_url: asOptionalString(data.call_url),
+  };
+}
+
+export async function claimGuestOrder(orderId: string, claimToken: string): Promise<void> {
+  await apiClient.post(`/orders/${orderId}/claim`, { claim_token: claimToken });
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {

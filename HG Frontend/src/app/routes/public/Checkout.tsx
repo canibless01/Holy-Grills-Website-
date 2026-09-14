@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from '@/lib/router';
 import { useCartStore, selectSubtotal, selectTotalHP } from '@/stores/cartStore';
 import { DELIVERY_FEE, formatPrice } from '@/data/menu';
-import { Flame, Loader2, MapPin, Home, Clock, UserRound, Mail, Phone } from 'lucide-react';
+import { Flame, Loader2, MapPin, Home, Clock, UserRound, Mail, Phone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { FulfillmentDialog } from '@/components/checkout/FulfillmentDialog';
 import { hasDeliveryInfo, hasPickupInfo, useFulfillmentStore } from '@/stores/fulfillmentStore';
 import { useAuthStore } from '@/stores/authStore';
+import { createOrderApi } from '@/services/api/order.service';
 
 const CheckoutPage = () => {
   const { items } = useCartStore();
@@ -37,7 +38,9 @@ const CheckoutPage = () => {
 
   const canPay = method === 'delivery' ? deliveryReady : pickupReady;
 
-  const handlePay = async () => {
+  const [capacityError, setCapacityError] = useState<{ nextDate?: string } | null>(null);
+
+  const handlePay = async (acceptDeferred = false) => {
     if (!isAuthenticated) {
       if (!guestEmail.trim() && !guestPhone.trim()) {
         setGuestContactError('Please enter your email or phone number so we can identify your order.');
@@ -46,15 +49,39 @@ const CheckoutPage = () => {
       setGuestContactError('');
     }
     if (!canPay) {
-      toast.error('Please save your delivery or pickup info first.');
+      toast.error('Please select a delivery address.');
       setDialogOpen(true);
       return;
     }
     setLoading(true);
-    navigate('/payment/processing', {
-      state: { total, method, hp: totalHP },
-      replace: true,
-    });
+    setCapacityError(null);
+
+    const payload = {
+      items: items.map((i) => ({ menu_item_id: i.menuItemId ?? i.id, quantity: i.quantity })),
+      payment_method: 'wallet',
+      delivery_type: method === 'delivery' ? 'on_campus' : 'off_campus',
+      delivery_location_id: deliveryInfo?.area || undefined,
+      notes: deliveryInfo?.streetAddress,
+      guest_email: !isAuthenticated ? guestEmail.trim() || undefined : undefined,
+      guest_phone: !isAuthenticated ? guestPhone.trim() || undefined : undefined,
+      accept_next_available_date: acceptDeferred ? true : undefined,
+    };
+
+    try {
+      const res = await createOrderApi(payload);
+      toast.success('Order placed successfully!');
+      useCartStore.getState().clearCart();
+      navigate(`/order-confirmation/${res.id}`, { state: { order: res } });
+    } catch (err: unknown) {
+      const errObj = (err as { response?: { data?: { error?: string; next_available_date?: string } } })?.response?.data;
+      if (errObj?.next_available_date || errObj?.error?.includes('CAPACITY')) {
+        setCapacityError({ nextDate: errObj.next_available_date || 'the next opening date' });
+      } else {
+        toast.error('Order placement failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderDeliverySummary = () => (
@@ -214,8 +241,24 @@ const CheckoutPage = () => {
                 <span className="text-xs font-body text-accent font-medium">+{totalHP} HP earned!</span>
               </div>
 
+              {capacityError ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center space-y-2">
+                  <div className="flex items-center justify-center gap-1.5 text-amber-800 font-semibold text-sm">
+                    <AlertCircle size={16} /> Today's orders are full
+                  </div>
+                  <p className="text-xs text-amber-700">Schedule for {capacityError.nextDate} instead?</p>
+                  <button
+                    onClick={() => handlePay(true)}
+                    disabled={loading}
+                    className="w-full py-2.5 rounded-lg bg-amber-600 text-white font-display font-bold text-xs hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    {loading ? <Loader2 size={14} className="animate-spin" /> : `Schedule for ${capacityError.nextDate}`}
+                  </button>
+                </div>
+              ) : null}
+
               <button
-                onClick={handlePay}
+                onClick={() => handlePay(false)}
                 disabled={loading || !canPay}
                 className="w-full py-3 rounded-lg bg-gradient-fire text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >

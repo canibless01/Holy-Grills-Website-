@@ -11,21 +11,18 @@ import { calculateCartTotals, createCartLineId } from '@/utils/pricing';
 import { DELIVERY_FEE } from '@/data/menu';
 import { getCartSnapshot } from '@/services/api/cart.service';
 import { getMenuItems } from '@/services/api/menu.service';
+import { validatePromoCode } from '@/services/api/order.service';
 import { useCartStore } from '@/stores/cartStore';
 import { useFavouritesStore } from '@/stores/favouritesStore';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-
-const PROMO_CODES: Record<string, number> = {
-  STUDENT10: 500,
-  FREEDELIVERY: 500,
-};
 
 const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'cart' | 'saved'>(initialTab);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<number>(0);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [guestCheckout, setGuestCheckout] = useState(false);
   const [redeemHP, setRedeemHP] = useState(true);
   const { items, updateQuantity, removeItem, addItem } = useCartStore();
@@ -50,14 +47,26 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
     [appliedPromo, hpRedemption, items]
   );
 
-  const applyPromo = () => {
-    const value = PROMO_CODES[promoCode.trim().toUpperCase()];
-    if (!value) {
-      toast.error('Promo code not recognised');
+  const applyPromo = async () => {
+    if (!promoCode.trim()) {
+      toast.error('Invalid promo code.');
       return;
     }
-    setAppliedPromo(value);
-    toast.success('Promo applied successfully');
+
+    setIsValidatingPromo(true);
+    try {
+      const res = await validatePromoCode(promoCode.trim(), totals.subtotal);
+      if (res.valid) {
+        setAppliedPromo(res.discount_amount);
+        toast.success('Promo code applied!');
+      } else {
+        toast.error(res.message || 'Invalid promo code.');
+      }
+    } catch {
+      toast.error('Invalid promo code.');
+    } finally {
+      setIsValidatingPromo(false);
+    }
   };
 
   const moveSavedToCart = (item: (typeof savedItems)[number]) => {
