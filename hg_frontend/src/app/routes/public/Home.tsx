@@ -11,6 +11,7 @@ import { StoreClosedDialog } from '@/components/shared/StoreClosedDialog';
 import { useCartStore } from '@/stores/cartStore';
 import { useQuery } from '@tanstack/react-query';
 import { getMenuItems } from '@/services/api/menu.service';
+import { getBanners, subscribeNewsletter } from '@/services/api/storefront.service';
 import { getCartQuantityForMenuItem, getPrimaryCartLineId } from '@/utils/pricing';
 import { playUiTone } from '@/utils/sound';
 import type { HeroSlide } from '@/types';
@@ -23,13 +24,23 @@ import {
 
 const HP_ICONS = [Flame, ShoppingBag, Flame] as const;
 
-const Home = ({ heroSlides }: { heroSlides: HeroSlide[] }) => {
+const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
   const { items, addItem, updateQuantity } = useCartStore();
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
+
   const { data: menuItems = [] } = useQuery({
     queryKey: ['menu-items'],
     queryFn: getMenuItems,
   });
+
+  const { data: apiBanners = [] } = useQuery({
+    queryKey: ['storefront-banners'],
+    queryFn: () => getBanners('home'),
+  });
+
+  const heroSlides = useMemoHeroSlides(initialSlides, apiBanners);
   const featuredItems = menuItems.filter((item) => item.isAvailable).slice(0, 4);
 
   const handleAdd = (id: string) => {
@@ -38,6 +49,23 @@ const Home = ({ heroSlides }: { heroSlides: HeroSlide[] }) => {
     addItem({ id: item.id, menuItemId: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl, hpValue: item.hpValue });
     playUiTone('add');
     toast.success(`${item.name} added to cart`);
+  };
+
+  const handleNewsletterSubmit = async () => {
+    if (!newsletterEmail.trim()) {
+      toast.error('Newsletter subscription failed.');
+      return;
+    }
+    setIsSubmittingNewsletter(true);
+    try {
+      await subscribeNewsletter(newsletterEmail.trim());
+      toast.success('Subscribed to newsletter!');
+      setNewsletterEmail('');
+    } catch {
+      toast.error('Newsletter subscription failed.');
+    } finally {
+      setIsSubmittingNewsletter(false);
+    }
   };
 
   useEffect(() => {
@@ -146,14 +174,42 @@ const Home = ({ heroSlides }: { heroSlides: HeroSlide[] }) => {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-secondary px-4">
               <Mail size={16} className="text-primary" />
-              <input className="w-full bg-transparent py-3 text-sm outline-none" placeholder="you@example.com" aria-label="Newsletter email" />
+              <input
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                className="w-full bg-transparent py-3 text-sm outline-none"
+                placeholder="you@example.com"
+                aria-label="Newsletter email"
+              />
             </div>
-            <button className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Join Fire Feast Squad</button>
+            <button
+              onClick={handleNewsletterSubmit}
+              disabled={isSubmittingNewsletter}
+              className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {isSubmittingNewsletter ? 'Joining...' : 'Join Fire Feast Squad'}
+            </button>
           </div>
         </div>
       </section>
     </main>
   );
 };
+
+function useMemoHeroSlides(initialSlides: HeroSlide[], apiBanners: any[]) {
+  if (!apiBanners.length) return initialSlides;
+  const mappedBanners: HeroSlide[] = apiBanners.map((b) => ({
+    id: b.id,
+    tag: b.subtitle || "FUTA's #1 Food Platform",
+    title: b.title || 'Flame-Grilled Goodness',
+    description: b.subtitle || 'Order freshly grilled meals delivered to your hostel.',
+    ctaButtons: [
+      { label: b.action_label || 'Order Now', href: b.action_url || '/menu', variant: 'primary' },
+    ],
+    imageUrl: b.image_url || '/placeholder.svg',
+    isActive: b.is_active ?? true,
+  }));
+  return mappedBanners.length > 0 ? mappedBanners : initialSlides;
+}
 
 export default Home;

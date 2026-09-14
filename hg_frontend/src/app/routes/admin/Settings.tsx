@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Flame, Store, Truck, Bell, Shield, Palette } from 'lucide-react';
+import { Flame, Store, Truck, Bell, Shield, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminSettings = () => {
@@ -10,6 +10,8 @@ const AdminSettings = () => {
     deliveryFee: '500',
     deliveryRadius: '5',
     avgDeliveryTime: '25',
+    transactionalEmailProvider: 'resend',
+    blastEmailProvider: 'resend',
     hpPerNaira: '0.01',
     minOrderAmount: '1500',
     orderNotifications: true,
@@ -70,6 +72,39 @@ const AdminSettings = () => {
                 />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Email Delivery Settings */}
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Mail size={18} className="text-primary" />
+            <h3 className="font-display font-bold text-foreground text-base">Email Delivery</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">Configure separate email service providers for transactional messages vs broadcast blasts.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-muted-foreground font-body mb-1">Transactional Provider</label>
+              <select
+                value={settings.transactionalEmailProvider}
+                onChange={(e) => setSettings((s) => ({ ...s, transactionalEmailProvider: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="resend">Resend</option>
+                <option value="onesignal">OneSignal</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground font-body mb-1">Blast Provider</label>
+              <select
+                value={settings.blastEmailProvider}
+                onChange={(e) => setSettings((s) => ({ ...s, blastEmailProvider: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="resend">Resend</option>
+                <option value="onesignal">OneSignal</option>
+              </select>
+            </div>
           </div>
         </div>
 

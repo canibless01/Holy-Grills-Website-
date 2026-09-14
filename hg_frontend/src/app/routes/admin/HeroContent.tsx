@@ -1,30 +1,13 @@
 "use client";
 
-/**
- * HeroContent.tsx  –  Admin panel for managing hero carousel slides
- * ---------------------------------------------------------------------------
- * Allows the admin to:
- *  - View all existing hero slides.
- *  - Add new slides (up to a reasonable limit).
- *  - Edit any field: tag, title, description, image URL, CTA buttons.
- *  - Toggle a slide's active/inactive status.
- *  - Delete a slide.
- *  - Save all changes via PUT /api/hero.
- *
- * How this connects to the frontend:
- *  Admin saves here → PUT /api/hero updates the in-memory HERO_SLIDES store →
- *  Next page load of the homepage fetches the updated slides server-side (SSR) →
- *  Users see the new content without any client-side delay.
- */
-
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Plus, Trash2, Edit3, Save, Eye, EyeOff, Image, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import type { HeroSlide, HeroCTA } from '@/types';
+import { createBanner, deleteBanner, getBanners, updateBanner } from '@/services/api/storefront.service';
 
-/* ── Default empty slide template ── */
 const EMPTY_SLIDE = (): HeroSlide => ({
   id: crypto.randomUUID(),
   tag: "FUTA's #1 Food Platform",
@@ -46,21 +29,34 @@ const AdminHeroContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  /* ── Load current slides from the API on mount ── */
   useEffect(() => {
-    fetch('/api/hero')
-      .then((r) => r.json())
-      .then((json) => {
-        setSlides(json.data ?? []);
-        setIsLoading(false);
+    getBanners('home')
+      .then((banners) => {
+        if (banners && banners.length > 0) {
+          const mapped: HeroSlide[] = banners.map((b) => ({
+            id: b.id,
+            tag: b.subtitle || "FUTA's #1 Food Platform",
+            title: b.title || '',
+            description: b.subtitle || '',
+            ctaButtons: [
+              { label: b.action_label || 'Order Now', href: b.action_url || '/menu', variant: 'primary' },
+            ],
+            imageUrl: b.image_url || '',
+            isActive: b.is_active ?? true,
+          }));
+          setSlides(mapped);
+        } else {
+          return fetch('/api/hero')
+            .then((r) => r.json())
+            .then((json) => setSlides(json.data ?? []));
+        }
       })
       .catch(() => {
         toast.error('Failed to load hero slides');
-        setIsLoading(false);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  /* ── Helpers ── */
   const updateSlide = (id: string, patch: Partial<HeroSlide>) =>
     setSlides((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
@@ -100,9 +96,14 @@ const AdminHeroContent = () => {
     setEditingId(slide.id);
   };
 
-  const deleteSlide = (id: string) => {
+  const deleteSlide = async (id: string) => {
     setSlides((prev) => prev.filter((s) => s.id !== id));
     if (editingId === id) setEditingId(null);
+    try {
+      await deleteBanner(id);
+    } catch {
+      // ignore
+    }
     toast.success('Slide removed');
   };
 
@@ -118,17 +119,27 @@ const AdminHeroContent = () => {
     });
   };
 
-  /* ── Save to API ── */
   const saveAll = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/hero', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slides }),
-      });
-      if (!res.ok) throw new Error('Save failed');
-      toast.success('Hero slides saved! Changes will appear on the next page load.');
+      for (const [idx, slide] of slides.entries()) {
+        const payload = {
+          title: slide.title,
+          subtitle: slide.tag || slide.description,
+          image_url: slide.imageUrl || null,
+          action_url: slide.ctaButtons[0]?.href || '/menu',
+          action_label: slide.ctaButtons[0]?.label || 'Order Now',
+          placement: 'home',
+          sort_order: idx,
+          is_active: slide.isActive,
+        };
+        try {
+          await updateBanner(slide.id, payload);
+        } catch {
+          await createBanner(payload);
+        }
+      }
+      toast.success('Hero slides saved successfully!');
     } catch {
       toast.error('Failed to save slides');
     } finally {
@@ -146,7 +157,6 @@ const AdminHeroContent = () => {
 
   return (
     <div className="max-w-3xl space-y-5">
-      {/* Header + Add button */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground font-body">
           {slides.length} slide{slides.length !== 1 ? 's' : ''} &middot; {slides.filter((s) => s.isActive).length} active
@@ -160,7 +170,6 @@ const AdminHeroContent = () => {
         </button>
       </div>
 
-      {/* Slide list */}
       <AnimatePresence initial={false}>
         {slides.map((slide, idx) => {
           const isEditing = editingId === slide.id;
@@ -173,9 +182,7 @@ const AdminHeroContent = () => {
               exit={{ opacity: 0, scale: 0.97 }}
               className={`bg-card rounded-xl border ${isEditing ? 'border-primary/40' : 'border-border'} overflow-hidden`}
             >
-              {/* Slide header row */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-secondary/30">
-                {/* Thumbnail */}
                 <div className="w-12 h-8 rounded overflow-hidden shrink-0 bg-secondary">
                   {slide.imageUrl ? (
                     <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -186,7 +193,6 @@ const AdminHeroContent = () => {
                   )}
                 </div>
 
-                {/* Slide label */}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-display font-bold text-foreground truncate">
                     Slide {idx + 1}{slide.tag ? ` · ${slide.tag}` : ''}
@@ -196,7 +202,6 @@ const AdminHeroContent = () => {
                   </p>
                 </div>
 
-                {/* Action buttons */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => moveSlide(slide.id, 'up')} disabled={idx === 0} aria-label="Move slide up" className="p-1.5 rounded hover:bg-secondary transition-colors disabled:opacity-30">
                     <ChevronUp size={13} />
@@ -226,7 +231,6 @@ const AdminHeroContent = () => {
                 </div>
               </div>
 
-              {/* Editable fields (expanded when editing) */}
               <AnimatePresence>
                 {isEditing && (
                   <motion.div
@@ -237,7 +241,6 @@ const AdminHeroContent = () => {
                     className="overflow-hidden"
                   >
                     <div className="p-4 space-y-4">
-                      {/* Tag */}
                       <Field label="Hero Tag" hint="Small badge text above the title">
                         <input
                           value={slide.tag}
@@ -247,7 +250,6 @@ const AdminHeroContent = () => {
                         />
                       </Field>
 
-                      {/* Title */}
                       <Field label="Hero Title" hint="Use newlines (↵) to create line breaks for dramatic effect">
                         <textarea
                           rows={3}
@@ -258,7 +260,6 @@ const AdminHeroContent = () => {
                         />
                       </Field>
 
-                      {/* Description */}
                       <Field label="Description">
                         <textarea
                           rows={2}
@@ -268,7 +269,6 @@ const AdminHeroContent = () => {
                         />
                       </Field>
 
-                      {/* Image URL */}
                       <Field label="Hero Image URL" hint="Use a direct image URL (JPEG / PNG / WebP)">
                         <input
                           value={slide.imageUrl}
@@ -278,7 +278,6 @@ const AdminHeroContent = () => {
                         />
                       </Field>
 
-                      {/* CTA Buttons */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-body font-medium text-foreground">CTA Buttons (max 2)</p>
@@ -343,7 +342,6 @@ const AdminHeroContent = () => {
         </div>
       )}
 
-      {/* Save button */}
       <button
         onClick={saveAll}
         disabled={isSaving}
@@ -360,7 +358,6 @@ const AdminHeroContent = () => {
   );
 };
 
-/* ── Small helpers ── */
 const inputCls =
   'w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-body focus:outline-none focus:ring-2 focus:ring-primary/50';
 
