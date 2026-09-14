@@ -1,8 +1,10 @@
 'use client';
 
 import { Clock3, Flame, ShoppingBag } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@/lib/router';
 import { useDeliveryWindow } from '@/hooks/useDeliveryWindow';
+import { getKitchenCapacity } from '@/services/api/menu.service';
 import { formatCountdown } from '@/utils/deliveryWindow';
 
 interface KitchenCountdownCardProps {
@@ -17,6 +19,11 @@ export function KitchenCountdownCard({
   ctaLabel = 'Start your order',
 }: KitchenCountdownCardProps) {
   const info = useDeliveryWindow();
+  const { data: capacity } = useQuery({
+    queryKey: ['kitchen-capacity'],
+    queryFn: getKitchenCapacity,
+  });
+
   const isClosed = info.status === 'closed';
   const countdownLabel = isClosed ? 'Next opening' : 'Kitchen window';
   const countdownValue = isClosed ? formatCountdown(info.countdownSeconds) : info.nextChangeLabel;
@@ -58,7 +65,9 @@ export function KitchenCountdownCard({
             </p>
             <div className="flex flex-wrap gap-2 lg:justify-end">
               <div className="inline-flex items-center rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-brand-brown-foreground/80">
-                {info.message}
+                {capacity?.daily_order_capacity !== undefined
+                  ? `Capacity: ${capacity.current_orders ?? 0} / ${capacity.daily_order_capacity} orders`
+                  : info.message}
               </div>
               <Link
                 to="/menu"
