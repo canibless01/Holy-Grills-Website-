@@ -21,13 +21,13 @@ const LoginPage = () => {
   const handleSubmit = async (data: LoginUserInput) => {
     try {
       await login(data.email, data.password);
-      toast.success('Welcome back! 🔥');
+      toast.success('Signed in successfully!');
       navigate('/dashboard');
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'Unable to sign in right now. Please try again.';
+          : 'Failed to sign in. Please check your credentials.';
       form.setError('root', { message });
     }
   };

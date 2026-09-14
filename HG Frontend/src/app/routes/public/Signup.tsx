@@ -24,19 +24,30 @@ const SignupPage = () => {
       password: "",
       confirmPassword: "",
       phone_number: "",
+      department_id: "",
+      academic_level_id: "",
+      referral_code: "",
     },
   });
 
   const handleSubmit = async (data: CreateUserInput) => {
     try {
-      await signup(data.name, data.email, data.password, data.phone_number);
-      toast.success("Account created! Welcome to Holy Grills 🔥");
+      await signup(
+        data.name,
+        data.email,
+        data.password,
+        data.phone_number,
+        data.department_id,
+        data.academic_level_id,
+        data.referral_code,
+      );
+      toast.success("Welcome to Holy Grill! Account created successfully.");
       navigate("/dashboard");
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "Unable to create account right now. Please try again.";
+          : "Registration failed. Please try again.";
       form.setError("root", { message });
     }
   };
@@ -65,6 +76,30 @@ const SignupPage = () => {
       type: "text",
       placeholder: "08012345678",
       formType: FormFieldTypes.PHONE_INPUT,
+    },
+    {
+      key: "department_id",
+      label: "Department ID",
+      icon: User,
+      type: "text",
+      placeholder: "e.g. dept_csc",
+      formType: FormFieldTypes.INPUT,
+    },
+    {
+      key: "academic_level_id",
+      label: "Academic Level ID",
+      icon: User,
+      type: "text",
+      placeholder: "e.g. level_300",
+      formType: FormFieldTypes.INPUT,
+    },
+    {
+      key: "referral_code",
+      label: "Referral Code (Optional)",
+      icon: User,
+      type: "text",
+      placeholder: "e.g. REF123",
+      formType: FormFieldTypes.INPUT,
     },
     {
       key: "password",
