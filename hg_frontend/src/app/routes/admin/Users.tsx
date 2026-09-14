@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatPrice } from '@/data/menu';
-import { Search, X, Flame, TrendingUp, Crown, ChevronDown, Edit3 } from 'lucide-react';
+import { Search, X, Flame, TrendingUp, Crown, Edit3, ShieldAlert, CheckCircle, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { getAdminUsers } from '@/services/api/admin.service';
+import { activateUser, changeUserRole, deactivateUser, getAdminUsers, getUserHpHistory, getUserOrderHistory } from '@/services/api/admin.service';
+
+const ROLES = ['student', 'admin', 'kitchen', 'rider', 'super_admin'];
 
 const AdminUsers = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'totalHP' | 'ordersCount' | 'totalSpent'>('totalHP');
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const { data: fetchedUsers = [], isLoading } = useQuery({
+  const [selectedUserDetail, setSelectedUserDetail] = useState<any | null>(null);
+  const { data: fetchedUsers = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: getAdminUsers,
+    queryFn: () => getAdminUsers(),
   });
   const [users, setUsers] = useState(fetchedUsers);
   const [hpInput, setHpInput] = useState('');
@@ -28,13 +31,42 @@ const AdminUsers = () => {
   const totalHP = users.reduce((sum, u) => sum + u.totalHP, 0);
   const topUser = [...users].sort((a, b) => b.totalHP - a.totalHP)[0];
 
-  const adjustHP = (userId: string) => {
-    const amount = parseInt(hpInput);
-    if (isNaN(amount)) return;
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, totalHP: Math.max(0, u.totalHP + amount) } : u)));
-    toast.success(`HP ${amount >= 0 ? 'added' : 'deducted'} successfully`);
-    setEditingUser(null);
-    setHpInput('');
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      await changeUserRole(userId, newRole);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+      toast.success(`User role updated to ${newRole}`);
+    } catch {
+      toast.error('Only super_admin can assign super_admin role / Cannot change your own role');
+    }
+  };
+
+  const handleToggleActive = async (user: (typeof users)[number]) => {
+    try {
+      if (user.is_active) {
+        await deactivateUser(user.id);
+        toast.success(`Deactivated account for ${user.name}`);
+      } else {
+        await activateUser(user.id);
+        toast.success(`Reactivated account for ${user.name}`);
+      }
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: !user.is_active } : u)));
+    } catch {
+      toast.error('Only super_admin users can deactivate a super_admin account');
+    }
+  };
+
+  const handleViewUserDetail = async (userId: string) => {
+    try {
+      const [hpData, orders] = await Promise.all([
+        getUserHpHistory(userId),
+        getUserOrderHistory(userId),
+      ]);
+      const targetUser = users.find((u) => u.id === userId);
+      setSelectedUserDetail({ user: targetUser, hpData, orders });
+    } catch {
+      toast.error("You don't have permission to view users from that campus");
+    }
   };
 
   return (
@@ -111,9 +143,9 @@ const AdminUsers = () => {
         <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3 bg-secondary/30 border-b border-border text-xs font-body font-medium text-muted-foreground">
           <div className="col-span-1">#</div>
           <div className="col-span-3">User</div>
+          <div className="col-span-2">Role</div>
           <div className="col-span-2">HP Balance</div>
-          <div className="col-span-2">Orders</div>
-          <div className="col-span-2">Total Spent</div>
+          <div className="col-span-2">Status</div>
           <div className="col-span-2">Actions</div>
         </div>
 
@@ -135,10 +167,25 @@ const AdminUsers = () => {
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm text-foreground font-body font-medium truncate">{user.name}</p>
+                    <button onClick={() => handleViewUserDetail(user.id)} className="text-sm text-foreground font-body font-medium truncate text-left hover:underline">
+                      {user.name}
+                    </button>
                     <p className="text-[10px] text-muted-foreground font-body truncate">{user.email}</p>
                   </div>
                 </div>
+
+                <div className="md:col-span-2 flex items-center">
+                  <select
+                    value={user.role || 'student'}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    className="px-2 py-1 rounded bg-secondary border border-border text-xs font-body focus:outline-none"
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="md:col-span-2 flex items-center">
                   <div className="flex items-center gap-1.5">
                     <Flame size={14} className="text-accent" />
@@ -146,57 +193,66 @@ const AdminUsers = () => {
                     <span className="text-[10px] text-muted-foreground font-body">HP</span>
                   </div>
                 </div>
+
                 <div className="md:col-span-2 flex items-center">
-                  <span className="text-sm text-foreground font-body">{user.ordersCount} orders</span>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${user.is_active !== false ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>
+                    {user.is_active !== false ? <CheckCircle size={11} /> : <ShieldAlert size={11} />}
+                    {user.is_active !== false ? 'Active' : 'Disabled'}
+                  </span>
                 </div>
-                <div className="md:col-span-2 flex items-center">
-                  <span className="text-sm text-foreground font-body font-medium">{formatPrice(user.totalSpent)}</span>
-                </div>
+
                 <div className="md:col-span-2 flex items-center gap-2">
                   <button
-                    onClick={() => { setEditingUser(editingUser === user.id ? null : user.id); setHpInput(''); }}
-                    className="px-2.5 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-body font-semibold hover:bg-accent/20 transition-colors flex items-center gap-1"
+                    onClick={() => handleToggleActive(user)}
+                    className={`px-2 py-1 rounded text-[10px] font-semibold border transition-colors ${
+                      user.is_active !== false ? 'border-destructive/30 text-destructive hover:bg-destructive/10' : 'border-success/30 text-success hover:bg-success/10'
+                    }`}
                   >
-                    <Edit3 size={10} /> Adjust HP
+                    {user.is_active !== false ? 'Deactivate' : 'Activate'}
                   </button>
                 </div>
               </div>
-              <AnimatePresence>
-                {editingUser === user.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 py-3 bg-secondary/10 border-t border-border flex items-center gap-3">
-                      <input
-                        type="number"
-                        value={hpInput}
-                        onChange={(e) => setHpInput(e.target.value)}
-                        placeholder="+50 or -20"
-                        className="w-32 px-3 py-1.5 rounded-lg bg-secondary border border-border text-foreground text-sm font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                      <button
-                        onClick={() => adjustHP(user.id)}
-                        className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-body font-semibold hover:bg-primary-hover transition-colors"
-                      >
-                        Apply
-                      </button>
-                      <button
-                        onClick={() => setEditingUser(null)}
-                        className="px-3 py-1.5 rounded-lg bg-secondary text-muted-foreground text-xs font-body hover:text-foreground transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           ))}
         </div>
       </div>
+
+      {/* User Detail Modal */}
+      <AnimatePresence>
+        {selectedUserDetail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="font-display font-bold text-foreground text-lg">{selectedUserDetail.user?.name}</h3>
+                <button onClick={() => setSelectedUserDetail(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+              </div>
+
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p><strong className="text-foreground">Email:</strong> {selectedUserDetail.user?.email}</p>
+                <p><strong className="text-foreground">Role:</strong> {selectedUserDetail.user?.role || 'student'}</p>
+                <p><strong className="text-foreground">HP Balance:</strong> {selectedUserDetail.hpData?.hp_balance ?? selectedUserDetail.user?.totalHP ?? 0} HP</p>
+                <p><strong className="text-foreground">Tier:</strong> {selectedUserDetail.hpData?.tier || 'Regular'} ({selectedUserDetail.hpData?.tier_multiplier || 1.0}x)</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider mb-2">Order History</h4>
+                {selectedUserDetail.orders?.length ? (
+                  <div className="space-y-2 text-xs">
+                    {selectedUserDetail.orders.map((o: any) => (
+                      <div key={o.id} className="flex justify-between rounded-lg bg-secondary/50 p-2">
+                        <span>{o.order_number || o.id}</span>
+                        <span className="font-semibold text-foreground">{o.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No past orders found for this user.</p>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Gift, Heart, ShoppingBag } from 'lucide-react';
 import { useNavigate } from '@/lib/router';
 import { CartItemCard } from '@/components/cart/CartItemCard';
@@ -12,13 +12,28 @@ import { DELIVERY_FEE } from '@/data/menu';
 import { getCartSnapshot } from '@/services/api/cart.service';
 import { getMenuItems } from '@/services/api/menu.service';
 import { validatePromoCode } from '@/services/api/order.service';
+import { getSavedItems, moveCartToSaved, moveSavedToCart, removeSavedItem, saveItem } from '@/services/api/saved.service';
 import { useCartStore } from '@/stores/cartStore';
 import { useFavouritesStore } from '@/stores/favouritesStore';
 import { useAuthStore } from '@/stores/authStore';
+import type { MenuItem } from '@/types';
 import { toast } from 'sonner';
+
+interface DisplaySavedItem {
+  id: string;
+  savedItemId?: string;
+  name: string;
+  description?: string;
+  price: number;
+  imageUrl: string;
+  hpValue: number;
+  isAvailable: boolean;
+  category: string;
+}
 
 const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'cart' | 'saved'>(initialTab);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<number>(0);
@@ -26,7 +41,7 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
   const [guestCheckout, setGuestCheckout] = useState(false);
   const [redeemHP, setRedeemHP] = useState(true);
   const { items, updateQuantity, removeItem, addItem } = useCartStore();
-  const { items: savedItems, toggle } = useFavouritesStore();
+  const { items: favItems, toggle: toggleFav } = useFavouritesStore();
   const { user, isAuthenticated } = useAuthStore();
 
   const { data } = useQuery({
@@ -34,10 +49,34 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
     queryFn: () => getCartSnapshot(items),
     initialData: { items, walletBalance: 8400, availableHP: 248 },
   });
+
   const { data: menuItems = [] } = useQuery({
     queryKey: ['menu-items'],
     queryFn: getMenuItems,
   });
+
+  const { data: apiSavedItems = [] } = useQuery({
+    queryKey: ['saved-items'],
+    queryFn: getSavedItems,
+    enabled: isAuthenticated,
+  });
+
+  const savedList = useMemo<DisplaySavedItem[]>(() => {
+    if (isAuthenticated && apiSavedItems.length > 0) {
+      return apiSavedItems.map((item) => ({
+        id: item.menu_item_id || item.id,
+        savedItemId: item.id,
+        name: item.menu_item?.name || 'Menu Item',
+        description: '',
+        price: item.menu_item?.price || 0,
+        imageUrl: item.menu_item?.imageUrl || item.menu_item?.image_url || '/placeholder.svg',
+        hpValue: item.menu_item?.hpValue || item.menu_item?.hp_value || 10,
+        isAvailable: item.menu_item?.isAvailable ?? item.menu_item?.is_available ?? true,
+        category: 'general',
+      }));
+    }
+    return favItems;
+  }, [apiSavedItems, favItems, isAuthenticated]);
 
   const availableHP = isAuthenticated ? (user?.hp_balance ?? data.availableHP) : data.availableHP;
   const walletBalance = isAuthenticated ? (user?.wallet_balance ?? data.walletBalance) : data.walletBalance;
@@ -69,26 +108,63 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
     }
   };
 
-  const moveSavedToCart = (item: (typeof savedItems)[number]) => {
-    const defaultSize = item.sizes?.[0];
-    const sizeLabel = defaultSize?.label;
-    const basePrice = defaultSize?.price ?? item.price;
-    const lineId = createCartLineId(item.id, sizeLabel);
-    addItem({ id: lineId, menuItemId: item.id, name: item.name, price: basePrice, imageUrl: item.imageUrl, hpValue: item.hpValue, sizeLabel });
-    toggle(item);
+  const handleMoveSavedToCart = async (item: DisplaySavedItem) => {
+    const basePrice = item.price;
+    const lineId = createCartLineId(item.id);
+    addItem({ id: lineId, menuItemId: item.id, name: item.name, price: basePrice, imageUrl: item.imageUrl, hpValue: item.hpValue });
+
+    if (isAuthenticated && item.savedItemId) {
+      try {
+        await moveSavedToCart(item.savedItemId);
+        queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      } catch {
+        // fallback
+      }
+    }
+    const matchingFav = favItems.find((f) => f.id === item.id);
+    if (matchingFav) toggleFav(matchingFav);
+
     toast.success(`${item.name} moved to cart`);
   };
 
-  const saveCartItemToFavourites = (item: (typeof items)[number]) => {
-    const menuItem = menuItems.find((entry) => entry.id === (item.menuItemId ?? item.id));
-    if (menuItem && !savedItems.some((entry) => entry.id === menuItem.id)) {
-      toggle(menuItem);
-      toast.success('Saved to favourites');
-    } else {
-      toast.success('Removed from cart');
+  const handleSaveCartItemToSaved = async (item: (typeof items)[number]) => {
+    const menuItemId = item.menuItemId || item.id;
+    if (isAuthenticated) {
+      try {
+        await moveCartToSaved(item.id);
+        queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      } catch {
+        try {
+          await saveItem({ menu_item_id: menuItemId, quantity: item.quantity });
+          queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+        } catch {
+          // fallback
+        }
+      }
+    }
+
+    const menuItem = menuItems.find((entry) => entry.id === menuItemId);
+    if (menuItem && !favItems.some((entry) => entry.id === menuItem.id)) {
+      toggleFav(menuItem);
     }
 
     removeItem(item.id);
+    toast.success('Moved item to saved list');
+  };
+
+  const handleRemoveSaved = async (item: DisplaySavedItem) => {
+    if (isAuthenticated && item.savedItemId) {
+      try {
+        await removeSavedItem(item.savedItemId);
+        queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      } catch {
+        // fallback
+      }
+    }
+    const matchingFav = favItems.find((f) => f.id === item.id);
+    if (matchingFav) toggleFav(matchingFav);
+
+    toast.success('Item removed from saved');
   };
 
   return (
@@ -97,7 +173,7 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
         <div className="inline-flex rounded-full border border-border bg-card p-1">
           {[
             { key: 'cart', label: `My cart (${items.length})` },
-            { key: 'saved', label: `Saved items (${savedItems.length})` },
+            { key: 'saved', label: `Saved items (${savedList.length})` },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -123,17 +199,17 @@ const CartPage = ({ initialTab = 'cart' }: { initialTab?: 'cart' | 'saved' }) =>
                       onIncrement={() => updateQuantity(item.id, item.quantity + 1)}
                       onDecrement={() => updateQuantity(item.id, item.quantity - 1)}
                       onRemove={() => removeItem(item.id)}
-                      onMoveToSaved={() => saveCartItemToFavourites(item)}
+                      onMoveToSaved={() => handleSaveCartItemToSaved(item)}
                     />
                   ))}
                 </div>
               ) : (
                 <EmptyCart />
               )
-            ) : savedItems.length ? (
+            ) : savedList.length ? (
               <div className="space-y-4">
-                {savedItems.map((item) => (
-                  <CartItemCard key={item.id} mode="saved" item={item} onMoveToCart={() => moveSavedToCart(item)} onRemove={() => toggle(item)} />
+                {savedList.map((item) => (
+                  <CartItemCard key={item.id} mode="saved" item={item as MenuItem} onMoveToCart={() => handleMoveSavedToCart(item)} onRemove={() => handleRemoveSaved(item)} />
                 ))}
               </div>
             ) : (
