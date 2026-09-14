@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Flame, Store, Truck, Bell, Shield, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Flame, Store, Truck, Bell, Shield, Mail, ToggleLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFeatureFlags, updateFeatureFlag, type FeatureFlag } from '@/services/api/admin.service';
 
 const AdminSettings = () => {
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
   const [settings, setSettings] = useState({
     storeName: 'Holy Grills',
     storeEmail: 'hello@holygrills.com',
@@ -20,12 +22,66 @@ const AdminSettings = () => {
     maintenanceMode: false,
   });
 
+  useEffect(() => {
+    getFeatureFlags()
+      .then((flags) => {
+        if (flags && flags.length > 0) setFeatureFlags(flags);
+      })
+      .catch(() => {
+        // ignore fallback
+      });
+  }, []);
+
+  const handleToggleFlag = async (flagName: string) => {
+    const flag = featureFlags.find((f) => f.feature_name === flagName);
+    if (!flag) return;
+    const nextState = !flag.is_active;
+
+    setFeatureFlags((prev) => prev.map((f) => (f.feature_name === flagName ? { ...f, is_active: nextState } : f)));
+    try {
+      await updateFeatureFlag(flagName, { is_active: nextState });
+      toast.success(`Feature flag '${flagName}' updated`);
+    } catch {
+      toast.error('Failed to update feature flag');
+      setFeatureFlags((prev) => prev.map((f) => (f.feature_name === flagName ? { ...f, is_active: !nextState } : f)));
+    }
+  };
+
   const handleSave = () => {
     toast.success('Settings saved successfully');
   };
 
   return (
     <div className="max-w-3xl space-y-6">
+        {/* Feature Flags Section */}
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <ToggleLeft size={18} className="text-primary" />
+            <h3 className="font-display font-bold text-foreground text-base">Feature Flags & Campus Toggles</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">Database-driven feature toggles. Changes apply in real time.</p>
+          <div className="space-y-3">
+            {featureFlags.map((flag) => (
+              <div key={flag.feature_name} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                <div>
+                  <p className="text-sm text-foreground font-body font-medium">{flag.feature_name}</p>
+                  <p className="text-[10px] text-muted-foreground font-body">{flag.description || 'Database feature flag toggle'}</p>
+                </div>
+                <button
+                  onClick={() => handleToggleFlag(flag.feature_name)}
+                  className={`w-10 h-6 rounded-full transition-colors ${
+                    flag.is_active ? 'bg-primary' : 'bg-secondary'
+                  } relative`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                    flag.is_active ? 'translate-x-4.5' : 'translate-x-0.5'
+                  }`} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Store Info */}
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">

@@ -1,13 +1,8 @@
-import { describe, expect, it } from 'bun:test';
-import apiClient from '@/lib/api/client';
+import { describe, expect, it } from 'vitest';
 import {
   getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
   getNotificationPreferences,
-  updateNotificationPreferences,
   getBlasts,
-  createBlast,
 } from '@/services/api/notifications.service';
 
 describe('Notifications API Service', () => {
