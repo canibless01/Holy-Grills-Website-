@@ -21,6 +21,9 @@ interface AuthState {
     email: string,
     password: string,
     phone?: string,
+    department_id?: string,
+    academic_level_id?: string,
+    referral_code?: string,
   ) => Promise<void>;
   setUser: (user: AuthSessionUser["user"] | null) => void;
   logout: () => Promise<void>;
@@ -130,10 +133,26 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signup: async (name, email, password, phone) => {
+      signup: async (
+        name,
+        email,
+        password,
+        phone,
+        department_id,
+        academic_level_id,
+        referral_code,
+      ) => {
         set({ isLoading: true });
         try {
-          await signupApi(name, email, password, phone);
+          await signupApi(
+            name,
+            email,
+            password,
+            phone,
+            department_id,
+            academic_level_id,
+            referral_code,
+          );
           const loginData = await loginApi(email, password);
           const accessToken = loginData.accessToken;
           const refreshToken = loginData.refreshToken;
@@ -153,7 +172,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (e) {
           const message = extractApiErrorMessage(
             e,
-            "Unable to create account right now. Please try again.",
+            "Registration failed. Please try again.",
           );
           toast.error(message);
           console.log("Signup error message:", message);

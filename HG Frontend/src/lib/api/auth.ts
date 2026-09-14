@@ -218,12 +218,18 @@ export async function signupApi(
   email: string,
   password: string,
   phone_number?: string,
+  department_id?: string,
+  academic_level_id?: string,
+  referral_code?: string,
 ): Promise<SignupAuthResponse> {
-  const { data } = await apiClient.post<SignupAuthResponse>("/auth/signup", {
+  const { data } = await apiClient.post<SignupAuthResponse>("/auth/register", {
     full_name: name,
     email,
     password,
     phone: phone_number,
+    department_id,
+    academic_level_id,
+    referral_code,
   });
   return data;
 }

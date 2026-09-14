@@ -9,6 +9,9 @@ export const createUserSchema = z
     confirmPassword: z
       .string()
       .min(6, "Confirm Password must be at least 6 characters long"),
+    department_id: z.string().optional(),
+    academic_level_id: z.string().optional(),
+    referral_code: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

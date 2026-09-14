@@ -35,6 +35,11 @@ const AccountDashboardPage = () => {
   const initials = getInitials(user.full_name);
   const dashboardStats = [
     {
+      label: 'Wallet Balance',
+      value: `₦${user.wallet_balance?.toLocaleString() ?? '0'}`,
+      helper: 'Available balance from GET /wallet/balance',
+    },
+    {
       label: 'Current HP',
       value: `${user.hp_balance} HP`,
       helper: user.hp_balance > 0 ? 'Trackable from your backend profile balance.' : 'Start ordering to earn your first HP',
@@ -50,11 +55,6 @@ const AccountDashboardPage = () => {
       label: 'Orders this month',
       value: `${monthlyOrders}`,
       helper: `${activeOrders} currently active`,
-    },
-    {
-      label: 'Referral wins',
-      value: `${referralWins}`,
-      helper: 'Referral and HP trend reflects live order rewards.',
     },
   ];
 
