@@ -401,3 +401,27 @@ export interface PushSubscriptionPayload {
   subscription: Record<string, unknown>;
   device_label?: string;
 }
+
+export interface ReferredUser {
+  id: string;
+  referred_user_id?: string;
+  name?: string;
+  email?: string;
+  status: 'pending' | 'completed' | string;
+  hp_awarded: number;
+  created_at: string;
+}
+
+export interface ReferralStats {
+  referral_code: string;
+  referral_link: string;
+  total_referrals: number;
+  completed_referrals: number;
+  pending_referrals: number;
+  total_hp_earned: number;
+}
+
+export interface ReferralDataResponse {
+  stats: ReferralStats;
+  referrals: ReferredUser[];
+}
