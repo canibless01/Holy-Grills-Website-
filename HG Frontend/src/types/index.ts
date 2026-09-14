@@ -340,3 +340,64 @@ export interface HeroSlide {
   imageUrl: string;
   isActive: boolean;
 }
+
+export interface Milestone {
+  id: string;
+  title: string;
+  description?: string;
+  trigger_type: string;
+  trigger_value: number;
+  hp_awarded: number;
+  time_window?: 'weekly' | 'monthly' | string | null;
+  icon_won?: string | null;
+  icon_locked?: string | null;
+  is_active?: boolean;
+  social_link?: string | null;
+  trigger_meta?: Record<string, unknown> | null;
+}
+
+export interface UserMilestone {
+  id: string;
+  user_id: string;
+  milestone_id: string;
+  completed_at: string;
+  hp_awarded: number;
+  period_key?: string | null;
+}
+
+export interface ChallengeBadge {
+  id?: string;
+  title?: string;
+  icon_won?: string;
+  earned?: boolean;
+  earned_at?: string;
+  hp_awarded?: number;
+  [key: string]: unknown;
+}
+
+export interface ChallengesMyResponse {
+  badges: ChallengeBadge[];
+  challenges_available: Milestone[];
+  challenges_completed: Milestone[];
+}
+
+export interface ChallengeCompleteResponse {
+  success?: boolean;
+  milestone?: string;
+  hp_awarded?: number;
+  already_completed?: boolean;
+  message?: string;
+  error?: string;
+}
+
+export interface PWAPushBonusStatus {
+  pwa_install: boolean;
+  push_subscribe: boolean;
+  bonus_completed: boolean;
+  eligible: boolean;
+}
+
+export interface PushSubscriptionPayload {
+  subscription: Record<string, unknown>;
+  device_label?: string;
+}

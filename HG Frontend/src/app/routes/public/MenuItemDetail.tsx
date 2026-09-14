@@ -137,8 +137,8 @@ const MenuItemDetail = () => {
 
   const unitPrice = basePrice + variationDelta + addonDelta;
   const total = unitPrice;
-  const hpTotal = item.hpValue;
-  const existingQty = getCartQuantityForMenuItem(items, item.id);
+  const hpTotal = item?.hpValue ?? 0;
+  const existingQty = item ? getCartQuantityForMenuItem(items, item.id) : 0;
 
   // Validation
   const areVariationsValid = variationGroups.every((group) => {
@@ -155,7 +155,7 @@ const MenuItemDetail = () => {
     return count >= minNeeded;
   });
 
-  const canAddToCart = item.isAvailable && areVariationsValid && areAddonsValid;
+  const canAddToCart = Boolean(item?.isAvailable) && areVariationsValid && areAddonsValid;
 
   const toggleVariationOption = (groupId: string, optionId: string, maxSelections: number) => {
     setSelectedVariations((prev) => {
