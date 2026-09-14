@@ -1,15 +1,17 @@
 import { Link, useLocation, useNavigate } from '@/lib/router';
-import { LogOut, ShoppingCart, User } from 'lucide-react';
+import { Building2, LogOut, ShoppingCart, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCartStore, selectItemCount } from '@/stores/cartStore';
 import { useAuthStore, getInitials, safeImageUrl } from '@/stores/authStore';
 import { DESKTOP_NAV_LINKS } from '@/constants/navigation';
+import { useCampus } from '@/context/CampusContext';
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const itemCount = useCartStore(selectItemCount);
   const { user, isAuthenticated, logout, hasHydrated } = useAuthStore();
+  const { selectedCampus, setIsSelectorOpen } = useCampus();
 
   if (!hasHydrated) {
     return null;
@@ -44,6 +46,15 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Campus Selector Trigger */}
+          <button
+            onClick={() => setIsSelectorOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary"
+          >
+            <Building2 size={14} className="text-primary" />
+            <span className="max-w-[120px] truncate">{selectedCampus.code.toUpperCase()}</span>
+          </button>
+
           <Link
             to="/cart"
             className="relative rounded-full p-2 text-brand-brown/70 transition-colors hover:text-foreground"
