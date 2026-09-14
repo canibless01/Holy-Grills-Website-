@@ -139,3 +139,28 @@ export async function getRewardsSnapshot(): Promise<RewardsSnapshot> {
     };
   }
 }
+
+export async function transferHpApi(recipientId: string, amount: number, notes?: string): Promise<void> {
+  await apiClient.post('/hp/transfer', { recipient_id: recipientId, amount, notes });
+}
+
+export async function spinExclusiveWheelApi(): Promise<{ prize_name: string; hp_awarded?: number }> {
+  const response = await apiClient.post('/exclusive-spin/spin');
+  const payload = unwrapData<Record<string, unknown>>(response.data);
+  return {
+    prize_name: asString(payload.prize_name ?? payload.name ?? payload.prize, 'Bonus Reward'),
+    hp_awarded: asOptionalNumber(payload.hp_awarded ?? payload.amount),
+  };
+}
+
+export async function redeemRewardApi(rewardId: string): Promise<void> {
+  await apiClient.post(`/rewards/${rewardId}/redeem`);
+}
+
+export async function flashRedeemRewardApi(rewardId: string): Promise<void> {
+  await apiClient.post(`/hp/flash-redeem/${rewardId}`);
+}
+
+export async function claimGraduationHpApi(): Promise<void> {
+  await apiClient.post('/graduation/claim');
+}

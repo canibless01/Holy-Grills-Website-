@@ -24,6 +24,7 @@ interface AuthState {
     department_id?: string,
     academic_level_id?: string,
     referral_code?: string,
+    nickname?: string,
   ) => Promise<void>;
   setUser: (user: AuthSessionUser["user"] | null) => void;
   logout: () => Promise<void>;
@@ -141,6 +142,7 @@ export const useAuthStore = create<AuthState>()(
         department_id,
         academic_level_id,
         referral_code,
+        nickname,
       ) => {
         set({ isLoading: true });
         try {
@@ -152,6 +154,7 @@ export const useAuthStore = create<AuthState>()(
             department_id,
             academic_level_id,
             referral_code,
+            nickname,
           );
           const loginData = await loginApi(email, password);
           const accessToken = loginData.accessToken;

@@ -43,6 +43,8 @@ const authProfileResponseSchema = z
     date_of_birth: z.string().nullable(),
     email_notifications: z.boolean(),
     full_name: z.string(),
+    nickname: z.string().nullable().optional(),
+    leaderboard_show_full_name: z.boolean().optional(),
     phone: z.string().nullable(),
   })
   .passthrough();
@@ -51,6 +53,8 @@ const authProfileUpdatePayloadSchema = z.object({
   date_of_birth: z.string(),
   email_notifications: z.boolean(),
   full_name: z.string(),
+  nickname: z.string().optional().nullable(),
+  leaderboard_show_full_name: z.boolean().optional(),
   phone: z.string(),
 });
 
@@ -59,6 +63,8 @@ export interface AuthUser {
   role: string;
   email: string;
   full_name: string;
+  nickname?: string | null;
+  leaderboard_show_full_name?: boolean;
   photo_url: string | null;
   hp_balance: number;
   wallet_balance: number;
@@ -154,6 +160,8 @@ export interface AuthProfileResponse {
   date_of_birth: string | null;
   email_notifications: boolean;
   full_name: string;
+  nickname?: string | null;
+  leaderboard_show_full_name?: boolean;
   phone: string | null;
 }
 
@@ -161,6 +169,8 @@ export interface AuthProfileUpdatePayload {
   date_of_birth: string;
   email_notifications: boolean;
   full_name: string;
+  nickname?: string | null;
+  leaderboard_show_full_name?: boolean;
   phone: string;
 }
 
@@ -221,6 +231,7 @@ export async function signupApi(
   department_id?: string,
   academic_level_id?: string,
   referral_code?: string,
+  nickname?: string,
 ): Promise<SignupAuthResponse> {
   const { data } = await apiClient.post<SignupAuthResponse>("/auth/register", {
     full_name: name,
@@ -230,6 +241,7 @@ export async function signupApi(
     department_id,
     academic_level_id,
     referral_code,
+    nickname,
   });
   return data;
 }
@@ -267,6 +279,8 @@ export async function getAuthProfile(): Promise<AuthProfileResponse> {
     date_of_birth: parsed.date_of_birth!,
     email_notifications: parsed.email_notifications!,
     full_name: parsed.full_name!,
+    nickname: parsed.nickname,
+    leaderboard_show_full_name: parsed.leaderboard_show_full_name,
     phone: parsed.phone!,
   };
 }
@@ -285,8 +299,20 @@ export async function updateAuthProfile(
     date_of_birth: parsed.date_of_birth!,
     email_notifications: parsed.email_notifications!,
     full_name: parsed.full_name!,
+    nickname: parsed.nickname,
+    leaderboard_show_full_name: parsed.leaderboard_show_full_name,
     phone: parsed.phone!,
   };
+}
+
+export async function getDepartmentsApi(): Promise<Array<{ id: string; name: string; faculty?: string }>> {
+  const { data } = await apiClient.get<{ data: Array<{ id: string; name: string; faculty?: string }> }>("/departments");
+  return data?.data ?? (data as unknown as Array<{ id: string; name: string }>);
+}
+
+export async function getAcademicLevelsApi(): Promise<Array<{ id: string; name: string; value?: string }>> {
+  const { data } = await apiClient.get<{ data: Array<{ id: string; name: string; value?: string }> }>("/academic-levels");
+  return data?.data ?? (data as unknown as Array<{ id: string; name: string }>);
 }
 
 export async function requestPasswordResetApi(

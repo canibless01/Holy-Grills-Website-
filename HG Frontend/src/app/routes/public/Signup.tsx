@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@/lib/router";
-import { Flame, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Flame, Mail, Lock, User, Loader2, Smile } from "lucide-react";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createUserSchema, CreateUserInput } from "@/lib/validations";
@@ -10,16 +11,26 @@ import { FormFieldTypes } from "@/lib/form-field-type";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import { useAuthStore } from "@/stores/authStore";
 import Divider from "@/components/Divider";
+import { getDepartmentsApi, getAcademicLevelsApi } from "@/lib/api/auth";
 
 const SignupPage = () => {
   const signup = useAuthStore((s) => s.signup);
   const navigate = useNavigate();
+
+  const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
+  const [levels, setLevels] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    getDepartmentsApi().then(setDepartments).catch(() => {});
+    getAcademicLevelsApi().then(setLevels).catch(() => {});
+  }, []);
 
   // React form hook
   const form = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: "",
+      nickname: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -40,6 +51,7 @@ const SignupPage = () => {
         data.department_id,
         data.academic_level_id,
         data.referral_code,
+        data.nickname,
       );
       toast.success("Welcome to Holy Grill! Account created successfully.");
       navigate("/dashboard");
@@ -62,6 +74,14 @@ const SignupPage = () => {
       formType: FormFieldTypes.INPUT,
     },
     {
+      key: "nickname",
+      label: "Nickname (Optional)",
+      icon: Smile,
+      type: "text",
+      placeholder: "e.g. Speedy — this is what friends will call you",
+      formType: FormFieldTypes.INPUT,
+    },
+    {
       key: "email",
       label: "Email",
       icon: Mail,
@@ -76,22 +96,6 @@ const SignupPage = () => {
       type: "text",
       placeholder: "08012345678",
       formType: FormFieldTypes.PHONE_INPUT,
-    },
-    {
-      key: "department_id",
-      label: "Department ID",
-      icon: User,
-      type: "text",
-      placeholder: "e.g. dept_csc",
-      formType: FormFieldTypes.INPUT,
-    },
-    {
-      key: "academic_level_id",
-      label: "Academic Level ID",
-      icon: User,
-      type: "text",
-      placeholder: "e.g. level_300",
-      formType: FormFieldTypes.INPUT,
     },
     {
       key: "referral_code",
@@ -153,6 +157,36 @@ const SignupPage = () => {
                 />
               </div>
             ))}
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Department</label>
+              <select
+                {...form.register("department_id")}
+                className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Select Department (Optional)</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Academic Level</label>
+              <select
+                {...form.register("academic_level_id")}
+                className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Select Academic Level (Optional)</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {form.formState.errors.root && (
               <p className="text-sm text-destructive font-body text-center">{form.formState.errors.root.message}</p>

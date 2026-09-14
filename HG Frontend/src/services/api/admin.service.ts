@@ -130,3 +130,32 @@ export async function getAdminAnalyticsSnapshot(): Promise<AdminAnalyticsSnapsho
     users,
   };
 }
+
+export interface SpinPoolPrize {
+  id: string;
+  name: string;
+  weight: number;
+  is_active: boolean;
+  campus_id: string | null;
+  created_at?: string;
+}
+
+export async function getExclusiveSpinPool(): Promise<SpinPoolPrize[]> {
+  const response = await apiClient.get('/admin/exclusive-spin-pool');
+  const payload = unwrapData<Record<string, unknown>>(response.data);
+  return (payload.prizes as SpinPoolPrize[]) ?? [];
+}
+
+export async function addExclusiveSpinPrize(prize: { name: string; weight: number; is_active?: boolean }): Promise<SpinPoolPrize> {
+  const response = await apiClient.post('/admin/exclusive-spin-pool', prize);
+  return unwrapData<SpinPoolPrize>(response.data);
+}
+
+export async function updateExclusiveSpinPrize(prizeId: string, updates: Partial<{ name: string; weight: number; is_active: boolean }>): Promise<SpinPoolPrize> {
+  const response = await apiClient.patch(`/admin/exclusive-spin-pool/${prizeId}`, updates);
+  return unwrapData<SpinPoolPrize>(response.data);
+}
+
+export async function deleteExclusiveSpinPrize(prizeId: string): Promise<void> {
+  await apiClient.delete(`/admin/exclusive-spin-pool/${prizeId}`);
+}
