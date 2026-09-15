@@ -1,0 +1,63 @@
+{
+  "name": "StorefrontSection",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Unique slug identifying the section (e.g. 'hero', 'summer-promo')"
+    },
+    "title": {
+      "type": "string",
+      "description": "Display title shown in admin + on the homepage"
+    },
+    "section_type": {
+      "type": "string",
+      "enum": [
+        "hero",
+        "banner",
+        "promo",
+        "faq",
+        "early_supporter"
+      ],
+      "default": "banner",
+      "description": "Which homepage block template this section renders as"
+    },
+    "content": {
+      "type": "object",
+      "description": "Flexible content payload \u2014 text, images, links, social links, FAQ items \u2014 shaped by section_type"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Soft-delete toggle. Public homepage only renders active sections"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Display order on the homepage (ascending)"
+    }
+  },
+  "required": [
+    "key",
+    "title",
+    "section_type"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

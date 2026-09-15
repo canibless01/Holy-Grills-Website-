@@ -1,0 +1,40 @@
+{
+  "name": "FeatureFlag",
+  "type": "object",
+  "properties": {
+    "feature_name": {
+      "type": "string",
+      "description": "Unique identifier \u2014 lowercase alphanumeric with underscores (e.g. 'new_checkout_flow')"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the feature is visible to students. Defaults off so admins explicitly enable after testing"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this flag controls"
+    }
+  },
+  "required": [
+    "feature_name"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "DeviceToken",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "App user ID this device belongs to"
+    },
+    "player_id": {
+      "type": "string",
+      "description": "OneSignal subscriber/player ID used as the push target"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "web",
+        "ios",
+        "android"
+      ],
+      "default": "web"
+    },
+    "device_info": {
+      "type": "string",
+      "description": "Optional user-agent / device label"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this token should still receive pushes"
+    }
+  },
+  "required": [
+    "user_id",
+    "player_id"
+  ]
+}

@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Nunito — two weights only: Regular (400) and Bold (700). */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOLY GRILL — SINGLE SOURCE OF TRUTH
+   Brand spec:
+     Page bg            #F9F4EB
+     Item card / footer #FFFFFC
+     Heading text       #3D1200
+     Subheading text    #744F3E
+     CTA red            #F72B13
+   Spacing:  gutter 16px · margin 16px · grid base 8px
+   Shadows:  selected 0 0 #F72B13 20% · selected-soft 0 0 #F72B13 10% · cart 0 0 #F72B13 10%
+   Radius:   menu cards 16px · detail cards 12px · buttons 30px · home buttons 12px
+   ═══════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── SPACING SCALE ── */
+    --space-xs:  4px;
+    --space-sm:  8px;   /* grid base */
+    --space-md: 16px;   /* gutter + margin */
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl:48px;
+
+    /* ── CORNER-RADIUS SCALE ── */
+    --radius-sm:           8px;     /* inputs, small tags */
+    --radius-md:           16px;    /* menu / item / reward cards */
+    --radius-lg:           24px;    /* hero, modals */
+    --radius-pill:         9999px;
+    --radius-menu-card:    16px;    /* menu item cards */
+    --radius-detail-card:  12px;    /* detail-page cards */
+    --radius-button:       30px;    /* buttons — other pages */
+    --radius-button-home:  12px;    /* buttons — homepage only */
+    --radius: var(--radius-sm);
+
+    /* ── SHADOWS (brand-tinted red glow) ── */
+    --shadow-selected:       0 0 12px rgba(247, 43, 19, 0.20);
+    --shadow-selected-soft:  0 0 12px rgba(247, 43, 19, 0.10);
+    --shadow-cart-card:      0 0 12px rgba(247, 43, 19, 0.10);
+
+    /* ── FONT ── */
+    --font-heading: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-body:    'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    /* ── SEMANTIC COLOR TOKENS (HSL channels for hsl()) ── */
+    --background:          39 53% 95%;   /* #F9F4EB — page canvas */
+    --foreground:          18 100% 12%; /* #3D1200 — heading / section text */
+    --card:                60 100% 99%; /* #FFFFFC — item cards, footer */
+    --card-foreground:     18 100% 12%; /* #3D1200 */
+    --popover:             60 100% 99%; /* #FFFFFC */
+    --popover-foreground:  18 100% 12%; /* #3D1200 */
+
+    /* Red family — primary action / CTA */
+    --primary:             6 94% 52%;   /* #F72B13 — CTA red */
+    --primary-foreground: 60 100% 99%; /* #FFFFFC */
+    --primary-50:          39 53% 95%;  /* #F9F4EB */
+    --primary-100:         6 94% 52%;   /* #F72B13 */
+    --primary-200:         60 100% 99%; /* #FFFFFC */
+    --destructive:         6 94% 52%;   /* #F72B13 */
+    --destructive-foreground: 60 100% 99%;
+
+    /* Gold family — reward / warmth (retained for accents) */
+    --secondary:           39 100% 66%;  /* #FFC251 */
+    --secondary-foreground:18 100% 12%; /* #3D1200 */
+    --muted:               39 30% 90%;   /* soft cream tint */
+    --muted-foreground:    19 30% 35%;  /* #744F3E — subheading / explanation */
+    --accent:              39 100% 81%; /* #FFDD9F */
+    --accent-foreground:   18 100% 12%; /* #3D1200 */
+
+    /* Borders / inputs / focus */
+    --border:             39 30% 88%;  /* subtle cream border */
+    --input:              39 53% 95%;  /* #F9F4EB — search/typing box bg */
+    --ring:               6 94% 52%;   /* #F72B13 — focus ring */
+
+    --icon-color:         18 100% 12%; /* #3D1200 */
+    --text-color:          18 100% 12%; /* #3D1200 */
+
+    --chart-1: 6 94% 52%;   /* #F72B13 */
+    --chart-2: 39 100% 66%; /* #FFC251 */
+    --chart-3: 39 100% 81%; /* #FFDD9F */
+    --chart-4: 18 100% 12%; /* #3D1200 */
+    --chart-5: 6 94% 40%;   /* dark red */
+
+    --sidebar-background: 39 53% 95%;
+    --sidebar-foreground: 18 100% 12%;
+    --sidebar-primary:    6 94% 52%;
+    --sidebar-primary-foreground: 60 100% 99%;
+    --sidebar-accent:     39 100% 81%;
+    --sidebar-accent-foreground: 18 100% 12%;
+    --sidebar-border:     39 30% 88%;
+    --sidebar-ring:       6 94% 52%;
+  }
+
+  .dark {
+    --background:          16 40% 8%;
+    --foreground:          39 53% 95%;
+    --card:                16 30% 12%;
+    --card-foreground:     39 53% 95%;
+    --popover:             16 30% 12%;
+    --popover-foreground:  39 53% 95%;
+    --primary:             6 94% 52%;
+    --primary-foreground: 60 100% 99%;
+    --primary-50:          39 53% 95%;
+    --primary-100:         6 94% 52%;
+    --secondary:           39 100% 66%;
+    --secondary-foreground:18 100% 12%;
+    --muted:               16 20% 16%;
+    --muted-foreground:    19 30% 65%;
+    --accent:              16 20% 16%;
+    --accent-foreground:   39 100% 81%;
+    --destructive:         6 94% 52%;
+    --destructive-foreground: 60 100% 99%;
+    --border:              16 20% 18%;
+    --input:               16 20% 16%;
+    --ring:                 39 100% 66%;
+    --icon-color:          39 53% 95%;
+    --text-color:          39 53% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── HolyGrill component primitives ── */
+  .hg-card {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-menu-card);
+    padding: var(--space-md);
+  }
+  .hg-section-title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+  }
+  .hg-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: hsl(var(--primary));
+  }
+  .hg-body {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: hsl(var(--foreground));
+  }
+  .hg-caption {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Brand-tinted shadow utilities */
+  .shadow-selected      { box-shadow: var(--shadow-selected); }
+  .shadow-selected-soft { box-shadow: var(--shadow-selected-soft); }
+  .shadow-cart-card     { box-shadow: var(--shadow-cart-card); }
+
+  /* Reserved for hero / Holy Points banner / premium CTA only */
+  .flame-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+  .flame-text {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 254, 252, 0.7);
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+  }
+
+  /* Holy tier — animated gold shimmer for check-in card & premium CTAs */
+  .tier-shimmer-holy {
+    background: linear-gradient(135deg, #FFC251 0%, #FFD700 25%, #ECA829 50%, #FFD700 75%, #FFC251 100%);
+    background-size: 200% 200%;
+    animation: gold-shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes gold-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+}
