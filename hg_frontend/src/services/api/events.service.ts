@@ -110,10 +110,9 @@ export async function getEvents(): Promise<CampusEventItem[]> {
         ? ((unwrapped as Record<string, unknown>).events as unknown[])
         : [];
 
-    if (!list.length) return EVENT_DISCOVERY_ITEMS.map((e, i) => mapEvent(e, i));
     return list.map(mapEvent);
   } catch {
-    return EVENT_DISCOVERY_ITEMS.map((e, i) => mapEvent(e, i));
+    return [];
   }
 }
 
@@ -123,8 +122,7 @@ export async function getEvent(id: string): Promise<CampusEventItem | null> {
     const unwrapped = unwrapData<unknown>(response.data);
     return mapEvent(unwrapped, 0);
   } catch {
-    const mock = EVENT_DISCOVERY_ITEMS.find((entry) => entry.id === id);
-    return mock ? mapEvent(mock, 0) : null;
+    return null;
   }
 }
 

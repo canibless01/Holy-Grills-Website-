@@ -130,10 +130,9 @@ function toOrderList(payload: unknown): Order[] {
 export async function getKitchenQueue(windowId?: string): Promise<Order[]> {
   try {
     const response = await apiClient.get('/kitchen/queue', { params: { window_id: windowId } });
-    const orders = toOrderList(response.data);
-    return orders.length ? orders : MOCK_ORDERS.filter((o) => ['placed', 'confirmed', 'preparing'].includes(o.status));
+    return toOrderList(response.data);
   } catch {
-    return MOCK_ORDERS.filter((o) => ['placed', 'confirmed', 'preparing'].includes(o.status));
+    return [];
   }
 }
 

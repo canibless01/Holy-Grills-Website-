@@ -49,8 +49,8 @@ const MenuItemDetail = () => {
   const related = useMemo(() => item ? menuItems.filter((entry) => entry.category === item.category && entry.id !== item.id).slice(0, 3) : [], [item, menuItems]);
   const isSaved = item ? isFavourite(item.id) : false;
 
-  const variationGroups = item?.variationGroups ?? [];
-  const addonGroups = (item?.addonGroups && item.addonGroups.length > 0) ? item.addonGroups : fetchedAddonGroups;
+  const variationGroups = useMemo(() => item?.variationGroups ?? [], [item?.variationGroups]);
+  const addonGroups = useMemo(() => (item?.addonGroups && item.addonGroups.length > 0) ? item.addonGroups : fetchedAddonGroups, [item?.addonGroups, fetchedAddonGroups]);
 
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string[]>>({});
   const [selectedAddons, setSelectedAddons] = useState<Record<string, string[]>>({});
@@ -75,7 +75,7 @@ const MenuItemDetail = () => {
       }
     });
     setSelectedAddons(initialAddons);
-  }, [item, menuId]);
+  }, [item, menuId, variationGroups, addonGroups]);
 
   useLayoutEffect(() => {
     const query = window.matchMedia('(min-width: 1024px)');

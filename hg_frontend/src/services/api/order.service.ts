@@ -120,10 +120,9 @@ function toOrderList(payload: unknown): Order[] {
 export async function getOrders(): Promise<Order[]> {
   try {
     const response = await apiClient.get('/orders');
-    const orders = toOrderList(response.data);
-    return orders.length ? orders : MOCK_ORDERS;
+    return toOrderList(response.data);
   } catch {
-    return MOCK_ORDERS;
+    return [];
   }
 }
 
@@ -134,7 +133,7 @@ export async function getOrderById(orderId: string, claimToken?: string): Promis
     const unwrapped = unwrapData<unknown>(response.data);
     return mapOrder(unwrapped, 0);
   } catch {
-    return MOCK_ORDERS.find((order) => order.id === orderId) ?? null;
+    return null;
   }
 }
 

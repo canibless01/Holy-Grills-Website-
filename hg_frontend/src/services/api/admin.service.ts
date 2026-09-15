@@ -88,8 +88,6 @@ export async function getAdminUsers(params?: { campus_id?: string; limit?: numbe
         ? ((payload as Record<string, unknown>).users as unknown[])
         : [];
 
-    if (!users.length) return MOCK_USERS;
-
     return users.map((entry, index) => {
       const source = (entry ?? {}) as Record<string, unknown>;
       const profile = (source.profile ?? {}) as Record<string, unknown>;
@@ -106,7 +104,7 @@ export async function getAdminUsers(params?: { campus_id?: string; limit?: numbe
       };
     });
   } catch {
-    return MOCK_USERS;
+    return [];
   }
 }
 
@@ -253,8 +251,6 @@ export async function getAdminPayments(): Promise<Payment[]> {
         ? ((payload as Record<string, unknown>).payments as unknown[])
         : [];
 
-    if (!payments.length) return MOCK_PAYMENTS;
-
     return payments.map((entry, index) => {
       const source = (entry ?? {}) as Record<string, unknown>;
       const statusValue = asString(source.status, 'pending');
@@ -286,7 +282,7 @@ export async function getAdminPayments(): Promise<Payment[]> {
       };
     });
   } catch {
-    return MOCK_PAYMENTS;
+    return [];
   }
 }
 

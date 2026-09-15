@@ -9,7 +9,6 @@ describe('Marketplace API Service', () => {
   it('fetches marketplace listings', async () => {
     const listings = await getMarketplaceListings();
     expect(Array.isArray(listings)).toBe(true);
-    expect(listings.length).toBeGreaterThan(0);
   });
 
   it('fetches marketplace listing by id', async () => {

@@ -11,7 +11,7 @@ import { StoreClosedDialog } from '@/components/shared/StoreClosedDialog';
 import { useCartStore } from '@/stores/cartStore';
 import { useQuery } from '@tanstack/react-query';
 import { getMenuItems } from '@/services/api/menu.service';
-import { getBanners, subscribeNewsletter } from '@/services/api/storefront.service';
+import { getBanners, subscribeNewsletter, type StorefrontBanner } from '@/services/api/storefront.service';
 import { getCartQuantityForMenuItem, getPrimaryCartLineId } from '@/utils/pricing';
 import { playUiTone } from '@/utils/sound';
 import type { HeroSlide } from '@/types';
@@ -196,7 +196,7 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
   );
 };
 
-function useMemoHeroSlides(initialSlides: HeroSlide[], apiBanners: any[]) {
+function useMemoHeroSlides(initialSlides: HeroSlide[], apiBanners: StorefrontBanner[]) {
   if (!apiBanners.length) return initialSlides;
   const mappedBanners: HeroSlide[] = apiBanners.map((b) => ({
     id: b.id,
