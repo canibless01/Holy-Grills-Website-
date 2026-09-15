@@ -7,11 +7,23 @@ import {
   setAuthCookies,
 } from "@/lib/auth-session";
 
-export const apiClient = axios.create({
-  baseURL:
+function getResolvedBaseUrl(): string {
+  const envUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "/api",
+    "/api/v1";
+
+  let url = envUrl.trim().replace(/\/+$/, "");
+  if (url.endsWith("/api")) {
+    url = `${url}/v1`;
+  } else if (!url.includes("/api/v1") && !url.endsWith("/v1")) {
+    url = `${url}/api/v1`;
+  }
+  return url;
+}
+
+export const apiClient = axios.create({
+  baseURL: getResolvedBaseUrl(),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -19,6 +31,18 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  // Normalize request URL if it starts with /api/v1 or /api to prevent duplication with baseURL
+  if (config.url) {
+    if (config.url.startsWith("/api/v1/")) {
+      config.url = config.url.replace(/^\/api\/v1/, "");
+    } else if (config.url.startsWith("/api/")) {
+      config.url = config.url.replace(/^\/api/, "");
+    }
+    if (!config.url.startsWith("/")) {
+      config.url = `/${config.url}`;
+    }
+  }
+
   const token =
     typeof window === "undefined"
       ? undefined
