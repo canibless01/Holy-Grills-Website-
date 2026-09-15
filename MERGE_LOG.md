@@ -4,6 +4,17 @@ This document records the exact feature migration, motion mapping, responsive ad
 
 ---
 
+## Backend CORS Configuration
+* Allowed origins in backend configuration (`HG Backend/app/config.py`):
+  * `http://localhost:3000`
+  * `http://127.0.0.1:3000`
+  * `http://localhost:5173`
+  * `http://127.0.0.1:5173`
+  * `https://holy-grills-frontend.vercel.app`
+* Frontend dev server port alignment: `http://localhost:3000` for browser API calls to bypass origin blocking.
+
+---
+
 ## Panel 1: Student Panel
 
 ### 1. Global Layout & Components
