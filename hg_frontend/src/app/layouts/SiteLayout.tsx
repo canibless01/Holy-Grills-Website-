@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { CampusProvider } from '@/context/CampusContext';
 import { CampusSelectorModal } from '@/components/shared/CampusSelectorModal';
+import { PwaInstallBanner } from '@/components/shared/PwaInstallBanner';
 
 interface SiteLayoutProps {
   title?: string;
@@ -21,6 +22,7 @@ export function SiteLayout({ title, children, hideChrome = false }: SiteLayoutPr
         {!hideChrome && <Navbar />}
         {!hideChrome && <MobileHeader title={title} />}
         <CampusSelectorModal />
+        <PwaInstallBanner />
         <div className="flex-1 flex flex-col">{children}</div>
         {!hideChrome && <Footer />}
         {!hideChrome && <BottomTabBar />}
