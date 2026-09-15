@@ -285,7 +285,7 @@ export async function getAuthStreak(): Promise<AuthStreakResponse> {
 }
 
 export async function checkinStreakApi(): Promise<{ message: string; streak_count: number; hp_earned: number }> {
-  const { data } = await apiClient.post<Record<string, unknown>>("/auth/streak/checkin");
+  const { data } = await apiClient.post<Record<string, unknown>>("/daily-checkin");
   return {
     message: String(data.message ?? "Daily check-in completed!"),
     streak_count: Number(data.streak_count ?? 0),

@@ -5,9 +5,19 @@ import { ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { EmptyState } from '@/components/shared/EmptyState';
 
-export function AdminGuard({ children, allowKitchen = false }: { children: ReactNode; allowKitchen?: boolean }) {
+interface AdminGuardProps {
+  children: ReactNode;
+  allowKitchen?: boolean;
+  allowRider?: boolean;
+}
+
+export function AdminGuard({ children, allowKitchen = false, allowRider = false }: AdminGuardProps) {
   const user = useAuthStore((state) => state.user);
-  const allowed = user?.role === 'admin' || (allowKitchen && user?.role === 'kitchen');
+  const allowed =
+    user?.role === 'admin' ||
+    user?.role === 'super_admin' ||
+    (allowKitchen && user?.role === 'kitchen') ||
+    (allowRider && user?.role === 'rider');
 
   if (!allowed) {
     return (
@@ -16,7 +26,7 @@ export function AdminGuard({ children, allowKitchen = false }: { children: React
           <EmptyState
             icon={ShieldAlert}
             title="Restricted workspace"
-            description="This workspace is only visible to approved Holy Grills operators. Switch to an admin or kitchen role once backend auth is connected."
+            description="This workspace is only visible to approved Holy Grills operators with appropriate role credentials."
             ctaLabel="Return home"
             ctaTo="/"
           />
