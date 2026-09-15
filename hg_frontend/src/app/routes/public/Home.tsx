@@ -91,12 +91,10 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
           description="Flame-grilled proteins + crispy sides — made with the Holy Flame Method, every single order."
           action={<Link to="/menu" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">View full menu <ArrowRight size={14} /></Link>}
         />
-        <div className="relative mt-6">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
-          <div className="animate-[marquee_24s_linear_infinite] flex w-max gap-5">
+        <div className="relative mt-4 overflow-hidden rounded-2xl">
+          <div className="animate-[marquee_20s_linear_infinite] hover:[animation-play-state:paused] flex w-max gap-4 py-2">
             {marqueeItems.map((item, index) => (
-              <div key={`${item.id}-${index}`} className="w-[280px] shrink-0">
+              <div key={`${item.id}-${index}`} className="w-[220px] md:w-[240px] shrink-0">
                 <FoodCard
                   {...item}
                   quantityInCart={getCartQuantityForMenuItem(items, item.id)}

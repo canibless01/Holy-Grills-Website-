@@ -30,53 +30,38 @@ export function KitchenCountdownCard({
 
   return (
     <section className={`container mx-auto px-4 ${className}`.trim()} aria-live="polite">
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-[linear-gradient(135deg,rgba(255,138,76,0.10),rgba(255,250,239,0.94)_48%,rgba(255,209,102,0.10))] p-4 shadow-[0_14px_32px_rgba(53,31,18,0.06)] md:p-5">
-        <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-primary/10 blur-3xl" />
-
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-primary shadow-sm">
-              <Flame size={13} /> Kitchen radar
-            </div>
-            <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-end lg:gap-4">
-              <div>
-                <h2 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">
-                  {isClosed ? 'Kitchen opens in' : 'Kitchen is open now'}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {info.detail}
-                </p>
-              </div>
-              {showOrderHint ? (
-                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <ShoppingBag size={15} className="shrink-0 text-primary" />
-                  <span>Place your order now and it will be processed as soon as the kitchen opens.</span>
-                </div>
-              ) : null}
-            </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm md:px-5 md:py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Clock3 size={18} />
           </div>
-
-          <div className="flex flex-col gap-3 rounded-[1.4rem] border border-brand-brown/10 bg-brand-brown px-4 py-4 text-brand-brown-foreground lg:min-w-[260px] lg:items-end">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-brown-foreground/70">
-              <Clock3 size={13} /> {countdownLabel}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-display font-bold text-sm text-foreground">
+                {isClosed ? 'Kitchen Opens In' : 'Kitchen Open Live'}
+              </span>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                {countdownValue}
+              </span>
             </div>
-            <p className="font-display text-3xl font-black leading-none text-[#FFF6E7] md:text-4xl">
-              {countdownValue}
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {isClosed ? info.detail : 'Order now for instant prep & rapid delivery!'}
             </p>
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              <div className="inline-flex items-center rounded-full bg-white/10 px-3 py-2 text-xs font-medium text-brand-brown-foreground/80">
-                {capacity?.daily_order_capacity !== undefined
-                  ? `Capacity: ${capacity.current_orders ?? 0} / ${capacity.daily_order_capacity} orders`
-                  : info.message}
-              </div>
-              <Link
-                to="/menu"
-                className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
-              >
-                {ctaLabel}
-              </Link>
-            </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 ml-auto">
+          {capacity?.daily_order_capacity !== undefined && (
+            <span className="hidden sm:inline-block rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+              {capacity.current_orders ?? 0}/{capacity.daily_order_capacity} Orders
+            </span>
+          )}
+          <Link
+            to="/menu"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
+          >
+            {ctaLabel}
+          </Link>
         </div>
       </div>
     </section>
