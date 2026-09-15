@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, Clock, Flame, Heart, MessageSquare, Minus, Plus, ShoppingBag, Star, Truck } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useNavigate, useParams } from '@/lib/router';
 import { FoodCard } from '@/components/menu/FoodCard';
 import { HPBadge } from '@/components/hp/HPBadge';
@@ -19,6 +18,7 @@ const MenuItemDetail = () => {
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [extraQuantities, setExtraQuantities] = useState<Record<string, number>>({});
+  const [overallQuantity, setOverallQuantity] = useState<number>(1);
   const [isDesktop, setIsDesktop] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
   );
@@ -136,7 +136,7 @@ const MenuItemDetail = () => {
   });
 
   const unitPrice = basePrice + variationDelta + addonDelta;
-  const total = unitPrice;
+  const total = unitPrice * overallQuantity;
   const hpTotal = item?.hpValue ?? 0;
   const existingQty = item ? getCartQuantityForMenuItem(items, item.id) : 0;
 
@@ -225,8 +225,11 @@ const MenuItemDetail = () => {
         sizeLabel: selectedSize ?? undefined,
         extras: allExtras,
       });
+      if (overallQuantity > 1) {
+        updateQuantity(lineId, overallQuantity);
+      }
     } else {
-      updateQuantity(lineId, existingLine.quantity + 1);
+      updateQuantity(lineId, existingLine.quantity + overallQuantity);
     }
     playUiTone('add');
     toast.success(`${item.name} added to cart`, { description: `${formatPrice(unitPrice)} • +${hpTotal} HP` });
@@ -262,37 +265,56 @@ const MenuItemDetail = () => {
 
       {variationGroups.map((group) => {
         const selected = selectedVariations[group.id] || [];
+        const requiredCount = group.max_selections || 1;
+        const currentSelectedCount = selected.length;
+
         return (
-          <section key={group.id} className="space-y-3">
+          <section key={group.id} className="space-y-3 rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                {group.name} {group.is_required ? <span className="text-destructive">* (Required)</span> : '(Optional)'}
-              </p>
-              {group.max_selections > 1 ? (
-                <span className="text-xs text-muted-foreground">Select up to {group.max_selections}</span>
-              ) : null}
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-base font-bold text-foreground">{group.name}</h3>
+                {group.is_required && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                    Required
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                SELECT {requiredCount} ({currentSelectedCount}/{requiredCount} selected)
+              </span>
             </div>
-            <div className="space-y-2">
+
+            <div className="divide-y divide-border">
               {group.options?.map((option) => {
                 const isSelected = selected.includes(option.id);
+
                 return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    disabled={!option.is_available}
-                    onClick={() => toggleVariationOption(group.id, option.id, group.max_selections || 1)}
-                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors ${
-                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/30'
-                    } ${!option.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{option.name}</p>
-                      {option.price_delta ? (
-                        <p className="text-xs text-muted-foreground">+{formatPrice(option.price_delta)}</p>
-                      ) : null}
-                    </div>
-                    {isSelected ? <CheckCircle2 size={18} className="text-primary" /> : null}
-                  </button>
+                  <div key={option.id} className="flex items-center justify-between py-3">
+                    <span className="text-sm font-semibold text-foreground">{option.name}</span>
+
+                    {!option.is_available ? (
+                      <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                        Out of stock
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        {option.price_delta ? (
+                          <span className="text-xs font-bold text-primary">+{formatPrice(option.price_delta)}</span>
+                        ) : null}
+                        <div className="flex items-center rounded-full border border-border bg-background p-1 shadow-sm">
+                          <button
+                            type="button"
+                            onClick={() => toggleVariationOption(group.id, option.id, group.max_selections || 1)}
+                            className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                              isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                            }`}
+                          >
+                            {isSelected ? '✓' : '+'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -302,37 +324,58 @@ const MenuItemDetail = () => {
 
       {addonGroups.map((group) => {
         const selected = selectedAddons[group.id] || [];
+        const requiredCount = group.max_select || 1;
+        const currentSelectedCount = selected.length;
+
         return (
-          <section key={group.id} className="space-y-3">
+          <section key={group.id} className="space-y-3 rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                {group.name} {group.is_required ? <span className="text-destructive">* (Required)</span> : '(Optional)'}
-              </p>
-              {group.max_select > 1 ? (
-                <span className="text-xs text-muted-foreground">Select up to {group.max_select}</span>
-              ) : null}
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-base font-bold text-foreground">{group.name}</h3>
+                {group.is_required && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                    Required
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                SELECT {requiredCount} ({currentSelectedCount}/{requiredCount} selected)
+              </span>
             </div>
-            <div className="space-y-2">
+
+            <div className="divide-y divide-border">
               {group.addons?.map((addon) => {
                 if (addon.is_archived) return null;
                 const isSelected = selected.includes(addon.id);
+
                 return (
-                  <button
-                    key={addon.id}
-                    type="button"
-                    disabled={!addon.is_available}
-                    onClick={() => toggleAddonOption(group.id, addon.id, group.max_select || 1)}
-                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors ${
-                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/30'
-                    } ${!addon.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
+                  <div key={addon.id} className="flex items-center justify-between py-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{addon.name}</p>
                       {addon.description ? <p className="text-xs text-muted-foreground">{addon.description}</p> : null}
-                      <p className="text-xs font-semibold text-primary">+{formatPrice(addon.price)}</p>
                     </div>
-                    {isSelected ? <CheckCircle2 size={18} className="text-primary" /> : null}
-                  </button>
+
+                    {!addon.is_available ? (
+                      <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                        Out of stock
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-primary">+{formatPrice(addon.price)}</span>
+                        <div className="flex items-center rounded-full border border-border bg-background p-1 shadow-sm">
+                          <button
+                            type="button"
+                            onClick={() => toggleAddonOption(group.id, addon.id, group.max_select || 1)}
+                            className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                              isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-foreground'
+                            }`}
+                          >
+                            {isSelected ? '✓' : '+'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -398,81 +441,40 @@ const MenuItemDetail = () => {
     </>
   );
 
-  const summaryPanel = (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <HPBadge value={item.hpValue} variant="available" size="md" />
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.isAvailable ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-            {item.isAvailable ? 'Available now' : 'Currently unavailable'}
-          </span>
-        </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-      </div>
-
-      {optionBlocks}
-
-      <div className="grid gap-4 rounded-3xl border border-border bg-card p-4 sm:grid-cols-2">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Order total</p>
-          <p className="mt-2 font-display text-2xl font-bold text-foreground">{formatPrice(total)}</p>
-          <p className="text-xs text-accent">+{hpTotal} HP</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Delivery</p>
-          <div className="mt-2 space-y-1 text-sm text-foreground">
-            <p className="flex items-center gap-2"><Truck size={14} className="text-primary" /> 20–25 mins</p>
-            <p className="flex items-center gap-2"><Clock size={14} className="text-primary" /> Review for +10 HP</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <button onClick={handleAdd} disabled={!canAddToCart} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-fire px-4 py-4 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40">
-          <ShoppingBag size={18} /> Add to cart — {formatPrice(total)}
-        </button>
-        <button onClick={handleFavourite} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary">
-          <Heart size={16} className={isSaved ? 'fill-primary text-primary' : ''} /> {isSaved ? 'Saved item' : 'Save for later'}
-        </button>
-        {existingQty ? <p className="text-center text-xs text-muted-foreground">{existingQty} matching item(s) already in your cart</p> : null}
-      </div>
-    </div>
-  );
-
   return (
-    <main className="flex-1 pb-16 md:pt-16">
-      <div className="container mx-auto max-w-6xl px-4 py-6">
-        <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft size={16} /> Back to menu
-        </button>
+    <main className="min-h-screen bg-background pb-28">
+      {/* Top Hero Section */}
+      <div className="relative w-full">
+        <div className="relative h-72 w-full md:h-96">
+          <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-md text-foreground shadow-md transition-transform active:scale-95"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        </div>
 
-        {isDesktop ? (
-          <div className="grid gap-8 lg:grid-cols-[1.05fr,0.95fr] lg:items-start">
-            <div className="sticky top-24 overflow-hidden rounded-[2rem] border border-border bg-card">
-              <img src={item.imageUrl} alt={item.name} className="h-[560px] w-full object-cover" />
-              <div className="space-y-3 p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{item.category}</p>
-                <h1 className="font-display text-4xl font-extrabold text-foreground">{item.name}</h1>
-                {item.tagLine ? <p className="text-base italic text-muted-foreground">{item.tagLine}</p> : null}
-              </div>
-            </div>
-            {summaryPanel}
+        <div className="container mx-auto max-w-3xl px-4 pt-6 text-left space-y-2">
+          <h1 className="font-display text-3xl md:text-4xl font-extrabold text-foreground">{item.name}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{item.description}</p>
+          <div className="pt-1 flex items-center justify-between">
+            <span className="font-display text-xl md:text-2xl font-bold text-foreground">
+              from {formatPrice(item.price)}
+            </span>
+            <button onClick={handleFavourite} className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary">
+              <Heart size={16} className={isSaved ? 'fill-primary text-primary' : ''} /> {isSaved ? 'Saved' : 'Save'}
+            </button>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-[2rem] border border-border bg-card">
-              <img src={item.imageUrl} alt={item.name} className="h-80 w-full object-cover" />
-              <div className="space-y-3 p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{item.category}</p>
-                <h1 className="font-display text-3xl font-extrabold text-foreground">{item.name}</h1>
-                {item.tagLine ? <p className="text-sm italic text-muted-foreground">{item.tagLine}</p> : null}
-              </div>
-            </div>
-            {summaryPanel}
-          </div>
-        )}
+        </div>
+      </div>
 
-        <section className="mt-12 rounded-[2rem] border border-border bg-card p-6">
+      {/* Options Form */}
+      <div className="container mx-auto max-w-3xl px-4 pt-8 space-y-6">
+        {optionBlocks}
+
+        {/* Reviews Section */}
+        <section className="mt-8 rounded-[2rem] border border-border bg-card p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Reviews</p>
@@ -505,7 +507,7 @@ const MenuItemDetail = () => {
         </section>
 
         {related.length ? (
-          <section className="mt-12">
+          <section className="mt-8">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-2xl font-bold text-foreground">You might also like</h2>
               <button onClick={() => navigate('/menu')} className="text-sm font-semibold text-primary">Back to menu</button>
@@ -528,6 +530,39 @@ const MenuItemDetail = () => {
             </div>
           </section>
         ) : null}
+      </div>
+
+      {/* Sticky Bottom Footer Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-lg px-4 py-3 shadow-lg">
+        <div className="container mx-auto max-w-3xl flex items-center justify-between gap-4">
+          <div className="flex items-center rounded-full border border-border bg-card px-3 py-2 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setOverallQuantity((q) => Math.max(1, q - 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted text-foreground transition-colors"
+            >
+              <Minus size={16} />
+            </button>
+            <span className="w-8 text-center font-display font-bold text-base text-foreground">
+              {overallQuantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => setOverallQuantity((q) => q + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted text-foreground transition-colors"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+
+          <button
+            onClick={handleAdd}
+            disabled={!canAddToCart}
+            className="flex-1 rounded-full bg-primary px-6 py-3.5 text-center font-display font-bold text-base text-primary-foreground shadow-md hover:bg-primary/90 transition-transform active:scale-95 disabled:opacity-50"
+          >
+            Add {formatPrice(total)}
+          </button>
+        </div>
       </div>
     </main>
   );
