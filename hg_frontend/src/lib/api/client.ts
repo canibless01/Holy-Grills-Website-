@@ -7,12 +7,22 @@ import {
   setAuthCookies,
 } from "@/lib/auth-session";
 
+const defaultBackendUrl = "https://holy-grills-backend.onrender.com/api";
+
+const configuredUrl =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL;
+
+const baseURL = configuredUrl
+  ? configuredUrl.endsWith("/api")
+    ? configuredUrl
+    : `${configuredUrl.replace(/\/$/, "")}/api`
+  : defaultBackendUrl;
+
 export const apiClient = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "/api",
-  timeout: 10000,
+  baseURL,
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
