@@ -2,17 +2,27 @@
 
 import { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
-
-const FALLBACK_NUMBER = '2348000000000';
+import { useQuery } from '@tanstack/react-query';
+import { getPublicConfig } from '@/services/api/storefront.service';
 
 export function WhatsAppFloatingButton() {
   const [dismissed, setDismissed] = useState(false);
 
+  const { data: publicConfig } = useQuery({
+    queryKey: ['storefront-public-config'],
+    queryFn: getPublicConfig,
+  });
+
   if (dismissed) return null;
 
-  const resolvedNumber = FALLBACK_NUMBER;
+  const rawPhone =
+    (publicConfig as Record<string, unknown>)?.whatsapp_phone ||
+    (publicConfig as Record<string, unknown>)?.support_phone ||
+    '2348000000000';
+
+  const resolvedNumber = String(rawPhone).replace(/\D/g, '');
   const message = 'Hello, I need help with my order';
-  const href = `https://wa.me/${resolvedNumber}?text=${encodeURIComponent(message)}`;
+  const href = `https://wa.me/${resolvedNumber || '2348000000000'}?text=${encodeURIComponent(message)}`;
 
   return (
     <a
