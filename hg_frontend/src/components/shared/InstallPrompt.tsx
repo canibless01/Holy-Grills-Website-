@@ -5,8 +5,13 @@ import { Download, X, Share2, Plus, Flame } from 'lucide-react';
 
 const DISMISS_KEY = 'hg_install_dismissed';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 export function InstallPrompt() {
-  const [deferred, setDeferred] = useState<any>(null);
+  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow] = useState(false);
   const [showIOS, setShowIOS] = useState(false);
 
@@ -15,9 +20,9 @@ export function InstallPrompt() {
     if (localStorage.getItem(DISMISS_KEY) === '1') return;
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
-    const onBIP = (e: any) => {
+    const onBIP = (e: Event) => {
       e.preventDefault();
-      setDeferred(e);
+      setDeferred(e as BeforeInstallPromptEvent);
       setShow(true);
     };
     window.addEventListener('beforeinstallprompt', onBIP);
@@ -29,7 +34,7 @@ export function InstallPrompt() {
     if (localStorage.getItem(DISMISS_KEY) === '1') return;
     const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     const isSafari = /safari/.test(navigator.userAgent.toLowerCase()) && !/crios|fxios/.test(navigator.userAgent.toLowerCase());
-    if (isIOS && isSafari && !(window.navigator as any).standalone) {
+    if (isIOS && isSafari && !(window.navigator as unknown as { standalone?: boolean }).standalone) {
       const t = setTimeout(() => setShowIOS(true), 4000);
       return () => clearTimeout(t);
     }

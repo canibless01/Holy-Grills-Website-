@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Utensils, ChevronRight, X, Loader2, Calendar, Users, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { submitCateringRequest } from '@/services/api/events.service';
 
 const CATERING_IMAGE = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=70';
 
@@ -11,19 +12,31 @@ export function CateringCard() {
   const [form, setForm] = useState({ organizer_name: '', phone: '', email: '', event_name: '', event_date: '', expected_guests: '', details: '' });
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.organizer_name.trim() || !form.phone.trim()) {
       toast.error('Name & phone number are required');
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
-      toast.success('🍽️ Catering request submitted! Our team will reach out shortly.');
-      setSubmitting(false);
+    try {
+      const res = await submitCateringRequest({
+        organizer_name: form.organizer_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        event_name: form.event_name.trim() || 'General Catering Event',
+        event_date: form.event_date || new Date().toISOString().split('T')[0],
+        expected_guests: parseInt(form.expected_guests) || 10,
+        notes: form.details,
+      });
+      toast.success(res.message || '🍽️ Catering request submitted!');
       setShowForm(false);
       setForm({ organizer_name: '', phone: '', email: '', event_name: '', event_date: '', expected_guests: '', details: '' });
-    }, 600);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || err?.message || 'Failed to submit catering request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
