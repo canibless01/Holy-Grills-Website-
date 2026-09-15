@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, Flame, ShoppingBag } from 'lucide-react';
+import { Radio, Clock3, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@/lib/router';
 import { useDeliveryWindow } from '@/hooks/useDeliveryWindow';
@@ -15,8 +15,7 @@ interface KitchenCountdownCardProps {
 
 export function KitchenCountdownCard({
   className = '',
-  showOrderHint = false,
-  ctaLabel = 'Start your order',
+  ctaLabel = 'Order Now',
 }: KitchenCountdownCardProps) {
   const info = useDeliveryWindow();
   const { data: capacity } = useQuery({
@@ -25,45 +24,62 @@ export function KitchenCountdownCard({
   });
 
   const isClosed = info.status === 'closed';
-  const countdownLabel = isClosed ? 'Next opening' : 'Kitchen window';
   const countdownValue = isClosed ? formatCountdown(info.countdownSeconds) : info.nextChangeLabel;
 
   return (
-    <section className={`container mx-auto px-4 ${className}`.trim()} aria-live="polite">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-card p-3 shadow-sm md:px-5 md:py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Clock3 size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-sm text-foreground">
-                {isClosed ? 'Kitchen Opens In' : 'Kitchen Open Live'}
-              </span>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                {countdownValue}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground line-clamp-1">
-              {isClosed ? info.detail : 'Order now for instant prep & rapid delivery!'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 ml-auto">
+    <div className={`container mx-auto px-4 -mt-8 relative z-20 ${className}`.trim()}>
+      <div className="rounded-3xl border border-border bg-card p-6 shadow-xl space-y-4 max-w-2xl mx-auto">
+        {/* Top-left: Small pill-shaped tag */}
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary tracking-wide uppercase">
+            <Radio size={12} className="animate-pulse text-primary" />
+            Kitchen Radar
+          </span>
           {capacity?.daily_order_capacity !== undefined && (
-            <span className="hidden sm:inline-block rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-              {capacity.current_orders ?? 0}/{capacity.daily_order_capacity} Orders
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+              {capacity.current_orders ?? 0}/{capacity.daily_order_capacity} Capacity
             </span>
           )}
+        </div>
+
+        {/* Below tag: Medium heading */}
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          {isClosed ? 'Kitchen Opens Soon' : 'Kitchen Live Dispatch'}
+        </h2>
+
+        {/* Below heading: Small paragraph */}
+        <p className="text-sm text-muted-foreground">
+          {isClosed ? info.detail : 'Order now for instant kitchen prep and rapid campus delivery.'}
+        </p>
+
+        {/* Below paragraph: Wide, dark rectangular box containing large, bold countdown timer */}
+        <div className="rounded-2xl bg-zinc-900 dark:bg-zinc-950 p-5 text-center text-white shadow-inner">
+          <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-widest text-zinc-400 font-semibold mb-1">
+            <Clock3 size={14} className="text-primary" />
+            <span>{isClosed ? 'Time Until Next Window' : 'Current Window Closing In'}</span>
+          </div>
+          <p className="font-display text-4xl sm:text-5xl font-black tracking-tight text-white">
+            {countdownValue}
+          </p>
+        </div>
+
+        {/* Bottom of card: Horizontal footer row */}
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          {/* Left side: Small pill with text */}
+          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-foreground">
+            {isClosed ? 'Pre-orders Open' : 'Kitchen Active'}
+          </span>
+
+          {/* Right side: Solid rectangular action button */}
           <Link
             to="/menu"
-            className="inline-flex items-center justify-center rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-transform active:scale-95"
           >
-            {ctaLabel}
+            <span>{ctaLabel}</span>
+            <ArrowRight size={16} />
           </Link>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
