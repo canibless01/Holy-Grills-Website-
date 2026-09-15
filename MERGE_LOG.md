@@ -1,27 +1,89 @@
-# MERGE_LOG.md
+# MERGE LOG: Legacy (frontend-main) -> Primary (hg_frontend)
 
-## Overview
-This log tracks the file-by-file merge of features from `frontend-main` (LEGACY) into `hg_frontend` (PRIMARY), maintaining PRIMARY's design tokens and component library while bringing over all features, states, interactions, and motions.
+This document records the exact feature migration, motion mapping, responsive adaptations, backend endpoint integrations, and hardcoded value replacements during the merge from `frontend-main` into `hg_frontend`.
 
 ---
 
-## Log Entries
+## Panel 1: Student Panel
 
-| Timestamp / Step | LEGACY File Path | PRIMARY File Path | Features Found | Features Added | Features Skipped (Reason) | Motion Ported | Responsive Fixes |
-|---|---|---|---|---|---|---|---|
-| Step 2 | `frontend-main/src/pages/Home.jsx`, `WhatsAppFloatingButton.jsx`, `CookieConsent.jsx`, `InstallPrompt.jsx`, `SquadOrderEducation.jsx`, `CateringCard.jsx`, `EarlySupportersSection.jsx` | `hg_frontend/src/app/routes/public/Home.tsx`, `hg_frontend/src/app/layouts/SiteLayout.tsx`, `hg_frontend/src/components/shared/*` | Hero banner, kitchen status, auth stats, squad orders, catering request form, early supporters, PWA prompt, WhatsApp chat, Cookie consent | Integrated floating WhatsApp button, cookie consent bar, install prompt sheet, squad order benefits, catering request modal, early supporters, quick stats into PRIMARY SiteLayout and Home | None | Next.js/Tailwind CSS slide-in and fade animations | Full mobile & desktop responsive support |
-| Step 3 | `frontend-main/src/pages/Login.jsx`, `Register.jsx`, `ForgotPassword.jsx`, `ResetPassword.jsx`, `OAuthConsent.jsx` | `hg_frontend/src/app/routes/public/Login.tsx`, `ForgotPassword.tsx`, `Signup.tsx` | Password visibility toggle, role-based login navigation, password reset token validation, auth state management | Integrated role-based redirects (`/admin`, `/kitchen`, `/rider`), token validation on password reset, and auth validation | None | Standard loading state spinners | Full mobile & desktop responsive layout |
-| Step 4 | `frontend-main/src/pages/Menu.jsx`, `ItemDetail.jsx`, `MenuItemCard.jsx`, `CustomizePopup.jsx`, `ItemOptionGroup.jsx` | `hg_frontend/src/app/routes/public/Menu.tsx`, `MenuItemDetail.tsx` | Category tabs, search filter, variation/addon option groups, required selection validation, live price calculation, HP earn preview, item reviews | Integrated variation & add-on groups, required option validation rules, live pricing, HP badge, and reviews in PRIMARY design system | None | Framer-motion transitions and category tab scrolls | Full desktop & mobile responsive layouts |
-| Step 5 | `frontend-main/src/pages/Cart.jsx`, `Checkout.jsx`, `FreeSideCreditModal.jsx`, `KitchenClosedPopup.jsx`, `SquadOrderEducation.jsx` | `hg_frontend/src/app/routes/public/Cart.tsx`, `Checkout.tsx`, `hg_frontend/src/components/checkout/FulfillmentDialog.tsx` | Saved items list, promo code validation, fulfillment address popup, delivery vs pickup selector, guest email/phone contact fields, capacity schedule prompt | Integrated promo validation, saved items sync, fulfillment modal, guest contact inputs, and checkout flow | None | Smooth dialog transitions | Full mobile & desktop responsive layout |
-| Step 6 | `frontend-main/src/pages/Orders.jsx`, `OrderDetail.jsx`, `TrackOrders.jsx`, `OrderConfirmation.jsx`, `ActiveOrderCard.jsx` | `hg_frontend/src/app/routes/public/OrdersPage.tsx`, `OrderTracking.tsx`, `hg_frontend/src/components/orders/*` | Active order status bar, delivery/prep countdown timers, order item list, rider contact action, review submission for bonus HP, guest order claim | Integrated order status progression bar, real-time prep/delivery countdowns, rider contact tools, guest order lookup, and review rating form | None | Real-time status progress indicators | Full mobile & desktop responsive layout |
-| Step 7 | `frontend-main/src/pages/Streak.jsx`, `Rewards.jsx`, `HpEducation.jsx`, `Wallet.jsx`, `CombinedStreakCard.jsx`, `LoginStreakCard.jsx`, `SpinWheel.jsx`, `HpDisplay.jsx`, `HpHistoryLedger.jsx`, `HpTransferModal.jsx` | `hg_frontend/src/app/routes/public/Streak.tsx`, `hg_frontend/app/rewards`, `hg_frontend/app/hp-education`, `hg_frontend/app/wallet` | Weekly login streak tracking, PWA & push notification bonuses, active challenges/milestones, badge collection, HP transfer modal, ledger transaction history | Integrated streak calendar, bonus claim triggers, milestone completion, badge showcase, and HP ledger in PRIMARY design system | None | Pulsing flame and progress fill animations | Full mobile & desktop responsive layout |
-| Step 8 | `frontend-main/src/pages/Leaderboard.jsx`, `HallOfFame.jsx`, `LeaderboardPrizeBadge.jsx` | `hg_frontend/app/leaderboard/page.tsx`, `hg_frontend/src/app/routes/public/HallOfFame.tsx` | Leaderboard weekly/all-time filters, ranking tier highlights, graduation HP bonus claim, shareable inductee cards | Integrated ranking filters, graduation bonus claim action, and Hall of Fame shareable inductee cards into PRIMARY design system | None | Podium height transitions | Full mobile & desktop responsive layout |
-| Step 9 | `frontend-main/src/pages/Marketplace.jsx`, `MarketplaceDetail.jsx` | `hg_frontend/src/app/routes/public/Marketplace.tsx`, `hg_frontend/app/marketplace/[id]` | Product/digital categories, vendor listing requests, wallet/HP/card/split payment options, redemption code history | Integrated vendor listing request modal, multi-payment purchase flow, and redemption voucher drawer | None | Slide-up modal transitions | Full mobile & desktop responsive layout |
-| Step 10 | `frontend-main/src/pages/Events.jsx`, `EventDetail.jsx`, `EventCheckInScanner.jsx` | `hg_frontend/src/app/routes/public/Events.tsx`, `hg_frontend/app/events/[id]` | Ticket tier purchasing, event location details, HP attendance rewards, catering request form | Integrated ticketing, event location information, attendance HP rewards, and event catering modal | None | Smooth event card hover transforms | Full mobile & desktop responsive layout |
-| Step 11 | `frontend-main/src/pages/Referrals.jsx`, `Addresses.jsx`, `Profile.jsx`, `Notifications.jsx`, `NotificationPreferences.jsx`, `OrderLocks.jsx`, `FAQ.jsx`, `OurStory.jsx`, `TermsPrivacy.jsx` | `hg_frontend/app/referrals/page.tsx`, `addresses`, `profile`, `notifications`, `notification-preferences`, `order-locks` | Referral code share & WhatsApp invite links, milestone tiers, saved delivery addresses, push/email notification toggles, order locks countdown | Integrated referral links, WhatsApp invite actions, milestone tiers, address management, notification preference toggles, and order locks | None | Micro-animations on copy/share buttons | Full mobile & desktop responsive layout |
-| Step 12 | `frontend-main/src/components/admin/AdminDashboard.jsx`, `AdminOrders.jsx`, `AdminMenu.jsx`, `MenuItemModifiers.jsx`, `AdminUsers.jsx`, `AdminAnalytics.jsx`, `ImageUploader.jsx` | `hg_frontend/app/admin/`, `/admin/orders`, `/admin/menu`, `/admin/users`, `/admin/analytics` | Analytics dashboard metrics, status advancement, cancellation modals, refund triggers, menu modifier editor, user credit overrides | Integrated status advancement, cancellation modals, refund actions, user credit overrides, and analytics charts | None | Recharts bar/pie chart animations | Full mobile & desktop responsive layout |
-| Step 13 | `frontend-main/src/components/admin/AdminHp.jsx`, `AdminHpMultipliers.jsx`, `AdminRewards.jsx`, `AdminExclusiveSpin.jsx` | `hg_frontend/app/admin/hp`, `hg_frontend/app/admin/rewards` | Bulk HP grant dry-runs, single user HP grants, HP expiry controls, tier threshold editing, reward drops | Integrated bulk HP grants, single user HP credit/expiry tools, tier thresholds, and spin wheel probabilities | None | Standard loading indicators | Full mobile & desktop responsive layout |
-| Step 14 | `frontend-main/src/components/admin/AdminChallenges.jsx`, `AdminEvents.jsx`, `AdminMarketplace.jsx` | `hg_frontend/app/admin/challenges`, `/admin/events`, `/admin/marketplace` | Milestone creation, trigger rules, event ticketing allocation, vendor listing approvals | Integrated milestone creation forms, trigger rule selectors, event ticketing manager, and vendor listing approval workflows | None | Slide-up modal transitions | Full mobile & desktop responsive layout |
-| Step 15 | `frontend-main/src/components/admin/AdminDelivery.jsx`, `AdminOrderLocks.jsx`, `AdminNotifications.jsx`, `AdminStorefront.jsx`, `AdminPromos.jsx`, `AdminConfig.jsx`, `AdminSystem.jsx` | `hg_frontend/app/admin/delivery-windows`, `/admin/notifications`, `/admin/hero`, `/admin/settings` | Delivery slot locks, broadcast messaging, storefront hero slides, promo code management, system feature flags | Integrated delivery time slot locks, push broadcast messaging, storefront hero slides, promo code tools, and system settings | None | Toggle state switches | Full mobile & desktop responsive layout |
-| Step 16 | `frontend-main/src/pages/Kitchen.jsx`, `frontend-main/src/components/kitchen/*` | `hg_frontend/app/kitchen/page.tsx`, `hg_frontend/src/components/kitchen/*` | Kitchen open toggle, Kanban queue (Pending/Prep/Ready), scheduled order promotion, batch consolidation & advance, audio chimes | Integrated kitchen status toggle, Kanban prep queue, scheduled order promotion, batch advance actions, and audio alert triggers | None | Live pulse indicators & Kanban column transitions | Full mobile & desktop responsive layout |
-| Step 17 | `frontend-main/src/pages/Rider.jsx`, `frontend-main/src/components/rider/*` | `hg_frontend/app/rider/page.tsx`, `hg_frontend/src/components/rider/*` | Rider duty online toggle, active batch stops, pickup / delivery / attempt status updates, earnings breakdown, delivery history dialog | Integrated online duty toggle, active batch stop cards, delivery attempt modal, earnings summary, and history dialog | None | Live dispatch chime alerts & card transitions | Full mobile & desktop responsive layout |
+### 1. Global Layout & Components
+* **LEGACY Files:** `src/components/WhatsAppFloatingButton.jsx`, `src/components/CookieConsent.jsx`, `src/components/InstallPrompt.jsx`, `src/components/Layout.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/layouts/SiteLayout.tsx`
+* **UI Elements Ported:** Floating WhatsApp support widget, cookie banner consent modal, PWA install prompt toast/banner.
+* **Motion Ported:** Framer Motion smooth slide-in/fade-in transitions mapped to Tailwind design system classes (`animate-in fade-in slide-in-from-bottom`).
+* **Backend Endpoints Wired:** Integrated with `/api/storefront/config/public` for dynamic contact links.
+* **Responsive Fixes:** Positioned floating buttons with mobile-safe padding (`bottom-20 md:bottom-6`).
+
+### 2. Home Page & Hero CMS Integration
+* **LEGACY Files:** `src/pages/Home.jsx`, `src/components/SquadOrderEducation.jsx`, `src/components/CateringCard.jsx`, `src/components/EarlySupportersSection.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/public/Home.tsx`, `hg_frontend/src/components/shared/EarlySupportersSection.tsx`
+* **UI Elements Ported:** Marquee food carousel, Squad order education banner, Catering request modal card, Early Supporters section.
+* **Backend Endpoints Wired:**
+  * Banners: `GET /api/storefront/banners`
+  * Supporters: `GET /api/storefront/config/public` (dynamic supporters list)
+  * Catering Requests: `POST /api/events/catering-requests`
+  * Newsletter: `POST /api/storefront/newsletter`
+* **Hardcoded Values Removed:** Replaced static supporters array in `EarlySupportersSection` with dynamic backend payload.
+
+### 3. Events & Check-In Scanner
+* **LEGACY Files:** `src/pages/Events.jsx`, `src/components/EventCheckInScanner.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/public/Events.tsx`, `hg_frontend/src/components/events/EventCheckInScanner.tsx`
+* **UI Elements Ported:** Event list grid, ticket tier selector, QR ticket scanner component.
+* **Backend Endpoints Wired:**
+  * Events list: `GET /api/events`
+  * Event check-in: `POST /api/events/checkin`
+  * Catering submission: `POST /api/events/catering-requests`
+
+### 4. Checkout & Off-Campus Map
+* **LEGACY Files:** `src/pages/Checkout.jsx`, `src/components/OffCampusMap.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/public/Checkout.tsx`, `hg_frontend/src/components/checkout/FulfillmentDialog.tsx`, `hg_frontend/src/components/checkout/OffCampusMap.tsx`
+* **UI Elements Ported:** Guest checkout fields, delivery/pickup toggle tabs, interactive off-campus map spot selector with GPS capture.
+* **Backend Endpoints Wired:**
+  * Order creation: `POST /api/orders`
+  * Order capacity check: Response error handling for `CAPACITY_FULL` with deferral to `next_available_date`.
+
+---
+
+## Panel 2: Admin Panel
+
+### 1. Menu Modifier & Image Upload Management
+* **LEGACY Files:** `src/components/admin/AdminMenu.jsx`, `src/components/admin/ImageUploader.jsx`, `src/components/admin/MenuItemModifiers.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/admin/Menu.tsx`, `hg_frontend/src/components/admin/ImageUploader.tsx`
+* **UI Elements Ported:** Menu item search, category filter, availability toggle, hidden/secret item checkbox, direct Cloudinary file uploader.
+* **Backend Endpoints Wired:**
+  * Upload signature: `POST /api/upload/signature`
+  * Direct Cloudinary upload: `POST https://api.cloudinary.com/v1_1/{cloud_name}/image/upload`
+  * Menu management: `GET /api/menu`, `PATCH /api/menu/{id}`
+
+---
+
+## Panel 3: Kitchen Panel
+
+### 1. Kitchen Display System (KDS) & Prep Queue
+* **LEGACY Files:** `src/pages/Kitchen.jsx`, `src/components/kitchen/KitchenHeader.jsx`, `src/components/kitchen/KitchenOrderCard.jsx`, `src/components/kitchen/KitchenSettings.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/kitchen/Kitchen.tsx`
+* **UI Elements Ported:** Kitchen open/closed status switch, live Kanban prep queue, scheduled order promotion list, window batch consolidation summary card, kitchen settings modal.
+* **Backend Endpoints Wired:**
+  * Queue: `GET /api/kitchen/queue`
+  * Scheduled: `GET /api/kitchen/scheduled`
+  * Metrics: `GET /api/kitchen/metrics`
+  * Settings: `GET /api/kitchen/settings`, `PATCH /api/kitchen/settings`
+  * Batch advance: `POST /api/kitchen/batch/{id}/advance`
+  * Order status: `PATCH /api/orders/{id}/status`
+
+---
+
+## Panel 4: Rider Panel
+
+### 1. Logistics & Dispatch Dashboard
+* **LEGACY Files:** `src/pages/Rider.jsx`, `src/components/rider/RiderHeader.jsx`, `src/components/rider/RiderOrderCard.jsx`
+* **PRIMARY Files:** `hg_frontend/src/app/routes/rider/Rider.tsx`
+* **UI Elements Ported:** Online duty toggle with browser GPS capture, active batch delivery stop list, pickup/deliver status triggers, delivery attempt modal with reason notes, earnings breakdown, call customer link wrapper.
+* **Backend Endpoints Wired:**
+  * Duty toggle: `PATCH /api/riders/availability`
+  * My batch: `GET /api/riders/my-batch`
+  * Pickup order: `POST /api/riders/orders/{id}/pickup`
+  * Deliver order: `POST /api/riders/orders/{id}/deliver`
+  * Attempt order: `POST /api/riders/orders/{id}/attempt`
+  * Call link: `GET /api/riders/call/{id}`
+  * Stats & earnings: `GET /api/riders/stats`, `GET /api/riders/earnings`, `GET /api/riders/history`

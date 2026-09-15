@@ -32,8 +32,9 @@ export function CateringCard() {
       toast.success(res.message || '🍽️ Catering request submitted!');
       setShowForm(false);
       setForm({ organizer_name: '', phone: '', email: '', event_name: '', event_date: '', expected_guests: '', details: '' });
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Failed to submit catering request');
+    } catch (err: unknown) {
+      const errRes = (err as { response?: { data?: { error?: string } }; message?: string });
+      toast.error(errRes.response?.data?.error || errRes.message || 'Failed to submit catering request');
     } finally {
       setSubmitting(false);
     }

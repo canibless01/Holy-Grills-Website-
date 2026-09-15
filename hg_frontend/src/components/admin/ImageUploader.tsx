@@ -59,8 +59,9 @@ export function ImageUploader({ value, onChange, label = 'Upload Image', folder 
 
       if (onChange) onChange(imageUrl);
       toast.success('Image uploaded successfully!');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to upload image');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to upload image';
+      toast.error(message);
     } finally {
       setUploading(false);
     }

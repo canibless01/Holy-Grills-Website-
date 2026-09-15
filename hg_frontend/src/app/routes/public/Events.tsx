@@ -5,6 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Calendar, Flame, MapPin, UtensilsCrossed, X, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from '@/lib/router';
+import { EventCheckInScanner } from '@/components/events/EventCheckInScanner';
 import {
   getEvents,
   submitCateringRequest,
@@ -26,7 +27,7 @@ export default function EventsPage() {
   const [notes, setNotes] = useState('');
 
   // Fetch campus events
-  const { data: events = [], isLoading } = useQuery<CampusEventItem[]>({
+  const { data: events = [], isLoading, refetch } = useQuery<CampusEventItem[]>({
     queryKey: ['campus-events'],
     queryFn: getEvents,
   });
@@ -95,6 +96,11 @@ export default function EventsPage() {
               <span>Request Catering for Event</span>
             </button>
           </div>
+        </section>
+
+        {/* Event Check-In Scanner Tool */}
+        <section>
+          <EventCheckInScanner onSuccess={() => refetch()} />
         </section>
 
         {/* Events Grid */}

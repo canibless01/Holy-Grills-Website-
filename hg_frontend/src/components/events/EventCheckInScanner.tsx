@@ -29,8 +29,9 @@ export function EventCheckInScanner({ eventId, onSuccess }: EventCheckInScannerP
       if (onSuccess) onSuccess();
       setScanning(false);
       setTicketCode('');
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'Check-in failed. Please verify the ticket code.');
+    } catch (err: unknown) {
+      const errRes = (err as { response?: { data?: { error?: string } }; message?: string });
+      toast.error(errRes.response?.data?.error || errRes.message || 'Check-in failed. Please verify the ticket code.');
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,9 @@ import { Footer } from '@/components/layout/Footer';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { CampusProvider } from '@/context/CampusContext';
 import { CampusSelectorModal } from '@/components/shared/CampusSelectorModal';
+import { WhatsAppFloatingButton } from '@/components/shared/WhatsAppFloatingButton';
+import { CookieConsent } from '@/components/shared/CookieConsent';
+import { InstallPrompt } from '@/components/shared/InstallPrompt';
 
 interface SiteLayoutProps {
   title?: string;
@@ -24,6 +27,9 @@ export function SiteLayout({ title, children, hideChrome = false }: SiteLayoutPr
         <div className="flex-1 flex flex-col">{children}</div>
         {!hideChrome && <Footer />}
         {!hideChrome && <BottomTabBar />}
+        <WhatsAppFloatingButton />
+        <CookieConsent />
+        <InstallPrompt />
       </div>
     </CampusProvider>
   );

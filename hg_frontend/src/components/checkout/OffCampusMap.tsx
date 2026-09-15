@@ -6,6 +6,7 @@ import { MapPin, LocateFixed, Check } from 'lucide-react';
 interface OffCampusMapProps {
   pin?: { lat: number; lng: number } | null;
   onPinChange?: (location: { lat: number; lng: number }) => void;
+  onLocationSelect?: (locationName: string) => void;
   selectedGateId?: string | null;
   confirmed?: boolean;
   onConfirmLocation?: () => void;
@@ -14,6 +15,7 @@ interface OffCampusMapProps {
 export function OffCampusMap({
   pin,
   onPinChange,
+  onLocationSelect,
   confirmed = false,
   onConfirmLocation,
 }: OffCampusMapProps) {
@@ -26,6 +28,7 @@ export function OffCampusMap({
       (pos) => {
         const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         if (onPinChange) onPinChange(location);
+        if (onLocationSelect) onLocationSelect(`GPS: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`);
         setLocating(false);
       },
       () => setLocating(false),

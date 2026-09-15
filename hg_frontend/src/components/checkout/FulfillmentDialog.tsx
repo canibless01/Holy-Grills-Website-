@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CheckCircle2, Clock, Home, MapPin, Phone, StickyNote, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFulfillmentStore } from '@/stores/fulfillmentStore';
+import { OffCampusMap } from '@/components/checkout/OffCampusMap';
 
 interface FulfillmentDialogProps {
   open: boolean;
@@ -103,7 +104,7 @@ export function FulfillmentDialog({ open, onOpenChange }: FulfillmentDialogProps
       className="max-w-3xl w-full p-0 overflow-hidden rounded-t-2xl sm:rounded-lg
                  left-1/2 top-auto bottom-0 translate-x-[-50%] translate-y-0
                  sm:top-1/2 sm:bottom-auto sm:translate-y-[-50%]
-                 max-h-[85vh] sm:max-h-[90vh] data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4"
+                 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4"
     >
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-display text-xl">Delivery or Pickup</DialogTitle>
@@ -183,6 +184,21 @@ export function FulfillmentDialog({ open, onOpenChange }: FulfillmentDialogProps
                   {errors.area && <p className="text-destructive text-xs font-body mt-1">{errors.area}</p>}
                 </div>
               </div>
+
+              {/* Off-Campus Map Location Picker */}
+              <div className="mt-4">
+                <OffCampusMap
+                  onLocationSelect={(locationName) => {
+                    setDeliveryForm((prev) => ({
+                      ...prev,
+                      zone: prev.zone || 'Off Campus',
+                      area: prev.area || locationName,
+                      streetAddress: prev.streetAddress ? `${prev.streetAddress} (${locationName})` : locationName,
+                    }));
+                  }}
+                />
+              </div>
+
               <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
                   <CheckCircle2 size={14} className="text-success" />

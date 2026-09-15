@@ -7,6 +7,7 @@ import { HPBadge } from '@/components/hp/HPBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { getMenuItems } from '@/services/api/menu.service';
+import { ImageUploader } from '@/components/admin/ImageUploader';
 
 interface ManagedMenuItem extends MenuItem {
   addOnEditor?: string;
@@ -24,10 +25,10 @@ const AdminMenu = () => {
   useEffect(() => {
     setItems(
       menuItems.map((item) => ({
-      ...item,
-      addOnEditor: item.extras?.map((extra) => extra.title).join(', ') ?? '',
-      itemOrderCap: 40,
-      dailyOrderCap: 200,
+        ...item,
+        addOnEditor: item.extras?.map((extra) => extra.title).join(', ') ?? '',
+        itemOrderCap: 40,
+        dailyOrderCap: 200,
       })),
     );
   }, [menuItems]);
@@ -255,16 +256,25 @@ function MenuItemForm({
           {item ? 'Edit Item' : 'New Menu Item'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-            {[
-              { key: 'name', label: 'Name', type: 'text', placeholder: 'Holy Smash Burger' },
-              { key: 'description', label: 'Description', type: 'text', placeholder: 'Describe the item...' },
-              { key: 'price', label: 'Price (₦)', type: 'number', placeholder: '3500' },
-              { key: 'hpValue', label: 'HP Value', type: 'number', placeholder: '15' },
-              { key: 'addOnEditor', label: 'Add-on editor', type: 'text', placeholder: 'Sauce, extra spice...' },
-              { key: 'itemOrderCap', label: 'Per-item order cap', type: 'number', placeholder: '40' },
-              { key: 'dailyOrderCap', label: 'Total daily order cap', type: 'number', placeholder: '200' },
-              { key: 'imageUrl', label: 'Image URL', type: 'text', placeholder: 'https://...' },
-            ].map((field) => (
+          <div>
+            <ImageUploader
+              value={form.imageUrl}
+              onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
+              label="Item Image (Cloudinary Direct Upload)"
+              folder="menu_items"
+            />
+          </div>
+
+          {[
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'Holy Smash Burger' },
+            { key: 'description', label: 'Description', type: 'text', placeholder: 'Describe the item...' },
+            { key: 'price', label: 'Price (₦)', type: 'number', placeholder: '3500' },
+            { key: 'hpValue', label: 'HP Value', type: 'number', placeholder: '15' },
+            { key: 'addOnEditor', label: 'Add-on editor', type: 'text', placeholder: 'Sauce, extra spice...' },
+            { key: 'itemOrderCap', label: 'Per-item order cap', type: 'number', placeholder: '40' },
+            { key: 'dailyOrderCap', label: 'Total daily order cap', type: 'number', placeholder: '200' },
+            { key: 'imageUrl', label: 'Image URL', type: 'text', placeholder: 'https://...' },
+          ].map((field) => (
             <div key={field.key}>
               <label className="block text-xs text-muted-foreground font-body mb-1">{field.label}</label>
               <input
