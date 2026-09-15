@@ -8,6 +8,9 @@ import { FoodCard } from '@/components/menu/FoodCard';
 import { KitchenCountdownCard } from '@/components/shared/KitchenCountdownCard';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { StoreClosedDialog } from '@/components/shared/StoreClosedDialog';
+import { CateringCard } from '@/components/shared/CateringCard';
+import { SquadOrderEducation } from '@/components/shared/SquadOrderEducation';
+import { EarlySupportersSection } from '@/components/shared/EarlySupportersSection';
 import { useCartStore } from '@/stores/cartStore';
 import { useQuery } from '@tanstack/react-query';
 import { getMenuItems } from '@/services/api/menu.service';
@@ -18,7 +21,6 @@ import type { HeroSlide } from '@/types';
 import { toast } from 'sonner';
 import {
   HOME_HOLY_POINTS_FEATURES,
-  HOME_STATS,
   HOME_TESTIMONIALS,
 } from '@/content/homeContent';
 
@@ -78,13 +80,13 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
   const marqueeItems = [...featuredItems, ...featuredItems];
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="flex flex-1 flex-col space-y-8">
       <StoreClosedDialog />
       <HeroCarousel slides={heroSlides} />
 
       <KitchenCountdownCard className="pt-8" />
 
-      <section className="container mx-auto overflow-hidden px-4 py-8">
+      <section className="container mx-auto overflow-hidden px-4">
         <SectionHeader
           eyebrow="Selar-aligned menu"
           title="Real Grill. Real Flavour. 🔥"
@@ -107,7 +109,11 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-10">
+      <section className="container mx-auto px-4">
+        <SquadOrderEducation />
+      </section>
+
+      <section className="container mx-auto px-4">
         <div className="rounded-[2rem] bg-gradient-fire px-6 py-10 text-primary-foreground md:px-10">
           <div className="grid gap-6 md:grid-cols-[1.3fr,1fr] md:items-center">
             <div>
@@ -122,11 +128,11 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
                 const Icon = HP_ICONS[index % HP_ICONS.length];
 
                 return (
-                <div key={item.label} className="rounded-3xl bg-white/10 p-4 backdrop-blur">
-                  <Icon size={18} />
-                  <p className="mt-3 font-semibold">{item.label}</p>
-                  <p className="mt-1 text-sm text-primary-foreground/80">{item.helper}</p>
-                </div>
+                  <div key={item.label} className="rounded-3xl bg-white/10 p-4 backdrop-blur">
+                    <Icon size={18} />
+                    <p className="mt-3 font-semibold">{item.label}</p>
+                    <p className="mt-1 text-sm text-primary-foreground/80">{item.helper}</p>
+                  </div>
                 );
               })}
             </div>
@@ -134,7 +140,11 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-8">
+      <section className="container mx-auto px-4">
+        <CateringCard />
+      </section>
+
+      <section className="container mx-auto px-4">
         <SectionHeader
           eyebrow="Testimonials"
           title="Real Students. Real Orders. Real Flavour. 🔥"
@@ -163,6 +173,10 @@ const Home = ({ heroSlides: initialSlides }: { heroSlides: HeroSlide[] }) => {
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="container mx-auto px-4">
+        <EarlySupportersSection />
       </section>
 
       <section className="container mx-auto px-4 pb-14">
