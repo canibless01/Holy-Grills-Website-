@@ -47,9 +47,9 @@ const AccountDashboardPage = () => {
     {
       label: 'Weekly streak',
       value: `${streakData?.streakCount ?? 0} day${(streakData?.streakCount ?? 0) === 1 ? '' : 's'}`,
-      helper: streakData?.hasBreak
-        ? `Streak break detected (${streakData.daysSinceLastActivity} days idle). Order today to restart.`
-        : 'Streak is active. Keep ordering daily for bonus rewards.',
+      helper: streakData?.canCheckinToday
+        ? 'Daily check-in available! Check in to maintain streak.'
+        : 'Streak is active. Keep checking in daily for bonus rewards.',
     },
     {
       label: 'Orders this month',

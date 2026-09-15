@@ -165,31 +165,7 @@ export async function getMyBatch(campusId?: string, sequencing?: string): Promis
       orders: mappedOrders,
     };
   } catch {
-    // Return mock batch with orders if request fails
-    const mockOrders = MOCK_ORDERS.slice(0, 3).map((o, idx) => ({
-      id: o.id,
-      order_number: `HG-${o.id.slice(0, 6).toUpperCase()}`,
-      customer_name: 'Blessing Okon',
-      customer_phone: o.address.phone || '08034567890',
-      delivery_location: `${o.address.streetAddress}${o.address.landmark ? ` (${o.address.landmark})` : ''}`,
-      gate_name: 'South Gate',
-      hostel_name: 'Moremi Hall',
-      room_number: 'B204',
-      payment_method: idx === 1 ? ('cash' as const) : ('paystack' as const),
-      payment_status: idx === 1 ? ('pending' as const) : ('paid' as const),
-      total_amount: o.total,
-      status: o.status,
-      items: o.items.map((i) => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price })),
-      sequence: idx + 1,
-    }));
-
-    return {
-      id: 'batch-demo-1',
-      zone: 'Hostel Zone A',
-      status: 'assigned',
-      gate_name: 'South Gate',
-      orders: mockOrders,
-    };
+    return null;
   }
 }
 
@@ -278,6 +254,6 @@ export async function getRiderHistory(limit = 20, offset = 0): Promise<RiderBatc
 
     return list.map((o, idx) => mapOrderToRiderBatchOrder(o, idx));
   } catch {
-    return MOCK_ORDERS.slice(0, 5).map((o, idx) => mapOrderToRiderBatchOrder(o, idx));
+    return [];
   }
 }

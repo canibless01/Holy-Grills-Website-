@@ -27,6 +27,8 @@ const CheckoutPage = () => {
   const [guestPhone, setGuestPhone] = useState('');
   const [guestContactError, setGuestContactError] = useState('');
 
+  const [capacityError, setCapacityError] = useState<{ nextDate?: string } | null>(null);
+
   const deliveryFee = method === 'delivery' ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
 
@@ -37,8 +39,6 @@ const CheckoutPage = () => {
   if (items.length === 0) return null;
 
   const canPay = method === 'delivery' ? deliveryReady : pickupReady;
-
-  const [capacityError, setCapacityError] = useState<{ nextDate?: string } | null>(null);
 
   const handlePay = async (acceptDeferred = false) => {
     if (!isAuthenticated) {

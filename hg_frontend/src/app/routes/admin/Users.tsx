@@ -12,7 +12,12 @@ const AdminUsers = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'totalHP' | 'ordersCount' | 'totalSpent'>('totalHP');
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [selectedUserDetail, setSelectedUserDetail] = useState<any | null>(null);
+  interface SelectedUserDetailState {
+    user?: (typeof users)[number];
+    hpData?: Record<string, unknown>;
+    orders?: Array<{ id: string; order_number?: string; status: string }>;
+  }
+  const [selectedUserDetail, setSelectedUserDetail] = useState<SelectedUserDetailState | null>(null);
   const { data: fetchedUsers = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => getAdminUsers(),
@@ -230,15 +235,15 @@ const AdminUsers = () => {
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p><strong className="text-foreground">Email:</strong> {selectedUserDetail.user?.email}</p>
                 <p><strong className="text-foreground">Role:</strong> {selectedUserDetail.user?.role || 'student'}</p>
-                <p><strong className="text-foreground">HP Balance:</strong> {selectedUserDetail.hpData?.hp_balance ?? selectedUserDetail.user?.totalHP ?? 0} HP</p>
-                <p><strong className="text-foreground">Tier:</strong> {selectedUserDetail.hpData?.tier || 'Regular'} ({selectedUserDetail.hpData?.tier_multiplier || 1.0}x)</p>
+                <p><strong className="text-foreground">HP Balance:</strong> {String(selectedUserDetail.hpData?.hp_balance ?? selectedUserDetail.user?.totalHP ?? 0)} HP</p>
+                <p><strong className="text-foreground">Tier:</strong> {String(selectedUserDetail.hpData?.tier || 'Regular')} ({String(selectedUserDetail.hpData?.tier_multiplier || 1.0)}x)</p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider mb-2">Order History</h4>
                 {selectedUserDetail.orders?.length ? (
                   <div className="space-y-2 text-xs">
-                    {selectedUserDetail.orders.map((o: any) => (
+                    {selectedUserDetail.orders.map((o) => (
                       <div key={o.id} className="flex justify-between rounded-lg bg-secondary/50 p-2">
                         <span>{o.order_number || o.id}</span>
                         <span className="font-semibold text-foreground">{o.status}</span>

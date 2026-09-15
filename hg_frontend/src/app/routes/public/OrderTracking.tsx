@@ -72,6 +72,11 @@ const OrderTrackingPage = () => {
   const { isAuthenticated } = useAuthStore();
   const [isClaiming, setIsClaiming] = useState(false);
 
+  const [kitchenRating, setKitchenRating] = useState(5);
+  const [riderRating, setRiderRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id, claimToken],
     queryFn: () => getOrderById(id || '', claimToken),
@@ -120,11 +125,6 @@ const OrderTrackingPage = () => {
       </main>
     );
   }
-
-  const [kitchenRating, setKitchenRating] = useState(5);
-  const [riderRating, setRiderRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const handleReviewSubmit = async () => {
     if (!order?.id) return;

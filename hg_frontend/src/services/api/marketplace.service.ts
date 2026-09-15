@@ -97,10 +97,9 @@ export async function getMarketplaceListings(params?: {
         ? ((unwrapped as Record<string, unknown>).listings as unknown[])
         : [];
 
-    if (!list.length) return MARKETPLACE_VENDORS.map((v, i) => mapListing(v, i));
     return list.map(mapListing);
   } catch {
-    return MARKETPLACE_VENDORS.map((v, i) => mapListing(v, i));
+    return [];
   }
 }
 
@@ -110,8 +109,7 @@ export async function getMarketplaceListing(id: string): Promise<MarketplaceList
     const unwrapped = unwrapData<unknown>(response.data);
     return mapListing(unwrapped, 0);
   } catch {
-    const mock = MARKETPLACE_VENDORS.find((item) => item.id === id);
-    return mock ? mapListing(mock, 0) : null;
+    return null;
   }
 }
 

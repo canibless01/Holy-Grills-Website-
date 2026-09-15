@@ -53,17 +53,20 @@ export async function getNotifications(params?: { unread_only?: boolean; limit?:
       ? ((unwrapped as Record<string, unknown>).notifications as unknown[])
       : [];
 
-    return list.map((item: any) => ({
-      id: item.id || crypto.randomUUID(),
-      title: item.title || 'Notification',
-      body: item.body || item.message || '',
-      channel: item.channel || 'in_app',
-      action_url: item.action_url || item.actionUrl,
-      read_at: item.read_at || item.readAt || null,
-      read: Boolean(item.read_at || item.read),
-      created_at: item.created_at || item.createdAt || new Date().toISOString(),
-      type: item.type || 'system',
-    }));
+    return list.map((entry) => {
+      const item = (entry ?? {}) as Record<string, unknown>;
+      return {
+        id: String(item.id || crypto.randomUUID()),
+        title: String(item.title || 'Notification'),
+        body: String(item.body || item.message || ''),
+        channel: String(item.channel || 'in_app'),
+        action_url: item.action_url ? String(item.action_url) : item.actionUrl ? String(item.actionUrl) : undefined,
+        read_at: item.read_at ? String(item.read_at) : item.readAt ? String(item.readAt) : null,
+        read: Boolean(item.read_at || item.read),
+        created_at: String(item.created_at || item.createdAt || new Date().toISOString()),
+        type: String(item.type || 'system'),
+      };
+    });
   } catch {
     return [];
   }

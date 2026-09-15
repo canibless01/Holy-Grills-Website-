@@ -33,30 +33,35 @@ const authLoginResponseSchema = z
 
 const authStreakResponseSchema = z
   .object({
-    last_login_date: z.string(),
-    last_updated: z.string(),
-    streak_count: z.number(),
-  });
+    streak_count: z.number().default(0),
+    longest_streak: z.number().default(0),
+    last_checkin_date: z.string().nullable().optional(),
+    can_checkin_today: z.boolean().default(false),
+    weekly_history: z.array(z.boolean()).optional(),
+    streak_rewards: z.record(z.string(), z.number()).optional(),
+    hp_awarded: z.number().optional(),
+  })
+  .passthrough();
 
 const authProfileResponseSchema = z
   .object({
-    date_of_birth: z.string().nullable(),
-    email_notifications: z.boolean(),
-    full_name: z.string(),
+    date_of_birth: z.string().nullable().optional(),
+    email_notifications: z.boolean().optional(),
+    full_name: z.string().optional(),
     nickname: z.string().nullable().optional(),
     leaderboard_show_full_name: z.boolean().optional(),
-    phone: z.string().nullable(),
+    phone: z.string().nullable().optional(),
   })
   .passthrough();
 
 const authProfileUpdatePayloadSchema = z.object({
-  date_of_birth: z.string(),
-  email_notifications: z.boolean(),
-  full_name: z.string(),
+  date_of_birth: z.string().optional(),
+  email_notifications: z.boolean().optional(),
+  full_name: z.string().optional(),
   nickname: z.string().optional().nullable(),
   leaderboard_show_full_name: z.boolean().optional(),
-  phone: z.string(),
-});
+  phone: z.string().optional(),
+}).passthrough();
 
 export interface AuthUser {
   id: string;
@@ -151,9 +156,13 @@ export interface AuthLoginResponse {
 }
 
 export interface AuthStreakResponse {
-  last_login_date: string;
-  last_updated: string;
   streak_count: number;
+  longest_streak: number;
+  last_checkin_date: string | null;
+  can_checkin_today: boolean;
+  weekly_history?: boolean[];
+  streak_rewards?: Record<string, number>;
+  hp_awarded?: number;
 }
 
 export interface AuthProfileResponse {
@@ -184,7 +193,7 @@ export interface ResetPasswordResponse {
   success: boolean;
 }
 
-export function getLoginAccessToken(data): string | null {
+export function getLoginAccessToken(_data?: unknown): string | null {
   return getCookie(AUTH_TOKEN_COOKIE_NAME) ?? null;
 }
 
@@ -265,23 +274,45 @@ export async function getAuthStreak(): Promise<AuthStreakResponse> {
   const parsed = authStreakResponseSchema.parse(data);
 
   return {
-    last_login_date: parsed.last_login_date!,
-    last_updated: parsed.last_updated!,
-    streak_count: parsed.streak_count!,
+    streak_count: parsed.streak_count,
+    longest_streak: parsed.longest_streak,
+    last_checkin_date: parsed.last_checkin_date ?? null,
+    can_checkin_today: parsed.can_checkin_today,
+    weekly_history: parsed.weekly_history,
+    streak_rewards: parsed.streak_rewards,
+    hp_awarded: parsed.hp_awarded,
+  };
+}
+
+export async function checkinStreakApi(): Promise<{ message: string; streak_count: number; hp_earned: number }> {
+  const { data } = await apiClient.post<Record<string, unknown>>("/auth/streak/checkin");
+  return {
+    message: String(data.message ?? "Daily check-in completed!"),
+    streak_count: Number(data.streak_count ?? 0),
+    hp_earned: Number(data.hp_earned ?? 0),
+  };
+}
+
+export async function reclaimStreakApi(type: 'order' | 'topup'): Promise<{ message: string; streak_count: number }> {
+  const { data } = await apiClient.post<Record<string, unknown>>("/auth/streak/reclaim", { type });
+  return {
+    message: String(data.message ?? "Streak day reclaimed!"),
+    streak_count: Number(data.streak_count ?? 0),
   };
 }
 
 export async function getAuthProfile(): Promise<AuthProfileResponse> {
-  const { data } = await apiClient.get<unknown>("/auth/profile");
-  const parsed = authProfileResponseSchema.parse(data);
+  const { data } = await apiClient.get<unknown>("/auth/me");
+  const unwrapped = (data && typeof data === 'object' && 'user' in data ? (data as Record<string, unknown>).user : data);
+  const parsed = authProfileResponseSchema.parse(unwrapped);
 
   return {
-    date_of_birth: parsed.date_of_birth!,
-    email_notifications: parsed.email_notifications!,
-    full_name: parsed.full_name!,
+    date_of_birth: parsed.date_of_birth ?? null,
+    email_notifications: parsed.email_notifications ?? true,
+    full_name: parsed.full_name ?? "",
     nickname: parsed.nickname,
     leaderboard_show_full_name: parsed.leaderboard_show_full_name,
-    phone: parsed.phone!,
+    phone: parsed.phone ?? null,
   };
 }
 
@@ -289,19 +320,20 @@ export async function updateAuthProfile(
   payload: AuthProfileUpdatePayload,
 ): Promise<AuthProfileResponse> {
   const validatedPayload = authProfileUpdatePayloadSchema.parse(payload);
-  const { data } = await apiClient.patch<unknown>(
-    "/auth/profile",
+  const { data } = await apiClient.put<unknown>(
+    "/auth/me",
     validatedPayload,
   );
-  const parsed = authProfileResponseSchema.parse(data);
+  const unwrapped = (data && typeof data === 'object' && 'user' in data ? (data as Record<string, unknown>).user : data);
+  const parsed = authProfileResponseSchema.parse(unwrapped);
 
   return {
-    date_of_birth: parsed.date_of_birth!,
-    email_notifications: parsed.email_notifications!,
-    full_name: parsed.full_name!,
+    date_of_birth: parsed.date_of_birth ?? null,
+    email_notifications: parsed.email_notifications ?? true,
+    full_name: parsed.full_name ?? "",
     nickname: parsed.nickname,
     leaderboard_show_full_name: parsed.leaderboard_show_full_name,
-    phone: parsed.phone!,
+    phone: parsed.phone ?? null,
   };
 }
 
@@ -334,8 +366,8 @@ export async function resetPasswordApi(
   const { data } = await apiClient.post<ResetPasswordResponse>(
     "/auth/reset-password",
     {
-      access_token: accessToken,
-      password,
+      token: accessToken,
+      new_password: password,
     },
   );
   return data;
@@ -345,7 +377,7 @@ export async function updateUserProfileApi(
   profileData: Partial<AuthUserProfileResponse>,
 ): Promise<UserResponse> {
   const { data } = await apiClient.put<UserResponse>(
-    "/user/profile",
+    "/auth/me",
     profileData,
   );
   return data;
