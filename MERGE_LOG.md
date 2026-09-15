@@ -11,6 +11,7 @@ This document records the exact feature migration, motion mapping, responsive ad
   * `http://localhost:5173`
   * `http://127.0.0.1:5173`
   * `https://holy-grills-frontend.vercel.app`
+  * `https://hgfrontend-git-main-canibless01-5367s-projects.vercel.app`
 * Frontend dev server port alignment: `http://localhost:3000` for browser API calls to bypass origin blocking.
 
 ---
@@ -19,11 +20,11 @@ This document records the exact feature migration, motion mapping, responsive ad
 
 ### 1. Global Layout & Components
 * **LEGACY Files:** `src/components/WhatsAppFloatingButton.jsx`, `src/components/CookieConsent.jsx`, `src/components/InstallPrompt.jsx`, `src/components/Layout.jsx`
-* **PRIMARY Files:** `hg_frontend/src/app/layouts/SiteLayout.tsx`
-* **UI Elements Ported:** Floating WhatsApp support widget, cookie banner consent modal, PWA install prompt toast/banner.
+* **PRIMARY Files:** `hg_frontend/src/app/layouts/SiteLayout.tsx`, `hg_frontend/src/components/shared/WhatsAppFloatingButton.tsx`
+* **UI Elements Ported:** Floating WhatsApp support circular icon widget, cookie banner consent modal, PWA install prompt toast/banner.
 * **Motion Ported:** Framer Motion smooth slide-in/fade-in transitions mapped to Tailwind design system classes (`animate-in fade-in slide-in-from-bottom`).
-* **Backend Endpoints Wired:** Integrated with `/api/storefront/config/public` for dynamic contact links.
-* **Responsive Fixes:** Positioned floating buttons with mobile-safe padding (`bottom-20 md:bottom-6`).
+* **Backend Endpoints Wired:** Integrated with `/api/storefront/config/public` via `useQuery` for dynamic WhatsApp contact numbers.
+* **Responsive Fixes:** Formatted WhatsApp button as a compact 48x48px circle with mobile-safe bottom tab bar offset (`bottom-20 md:bottom-6`).
 
 ### 2. Home Page & Hero CMS Integration
 * **LEGACY Files:** `src/pages/Home.jsx`, `src/components/SquadOrderEducation.jsx`, `src/components/CateringCard.jsx`, `src/components/EarlySupportersSection.jsx`
