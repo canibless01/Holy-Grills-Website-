@@ -30,6 +30,7 @@ class Config:
     origins_set.update([
         "https://holy-grills-frontend.vercel.app",
         "https://hgfrontend-git-main-canibless01-5367s-projects.vercel.app",
+        "https://holy-grill-copy-copy-copy-cop-f435c07e.base44.app",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",

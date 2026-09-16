@@ -49,7 +49,15 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        expose_headers=["Authorization"],
+        supports_credentials=True,
+        max_age=86400,
+    )
 
     swagger_config = {
         "headers": [],
@@ -131,8 +139,11 @@ def create_app(config_class=Config):
     _logger = get_logger("holy_grills.app")
 
     @app.before_request
-    def _attach_request_id():
+    def _attach_request_id_and_handle_options():
         request.request_id = str(uuid.uuid4())[:8]
+        if request.method == "OPTIONS":
+            response = app.make_response(("", 204))
+            return response
 
     @app.errorhandler(405)
     def method_not_allowed(e):
