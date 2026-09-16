@@ -49,7 +49,29 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        expose_headers=["Authorization"],
+        supports_credentials=True,
+        max_age=86400,
+    )
+
+    @app.before_request
+    def handle_options_preflight():
+        if request.method == "OPTIONS":
+            response = app.make_response(("", 204))
+            origin = request.headers.get("Origin")
+            if origin and origin in app.config["CORS_ORIGINS"]:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+                response.headers["Access-Control-Expose-Headers"] = "Authorization"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Max-Age"] = "86400"
+            return response
 
     swagger_config = {
         "headers": [],
